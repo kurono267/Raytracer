@@ -34,6 +34,10 @@ protected:
 
     std::shared_ptr<Camera> _camera;
 
+    // For camera rotate
+    bool _isPressed = false;
+    bool _isFirst = false;
+    glm::vec2 _prev_mouse;
     float _dt;
     std::chrono::steady_clock::time_point _prevFrameTime;
 

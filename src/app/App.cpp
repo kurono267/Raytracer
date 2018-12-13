@@ -92,7 +92,23 @@ bool App::onKey(const GLFWKey& key) {
     return true;
 }
 bool App::onMouse(const GLFWMouse& mouse) {
-    _camera->onMouse(glm::vec2(mouse.x,mouse.y),_dt);
+    if(mouse.callState == GLFWMouse::onMouseButton){
+        if(mouse.button == GLFW_MOUSE_BUTTON_1){
+            if(mouse.action == GLFW_PRESS){
+                _isPressed = true;
+                _isFirst = true;
+            } else _isPressed = false;
+        }
+    } else if (mouse.callState == GLFWMouse::onMousePosition){
+        if(_isPressed){
+            if(!_isFirst){
+                glm::vec2 dp = glm::vec2(mouse.x,mouse.y)-_prev_mouse;
+                _camera->rotate(dp,_dt);
+            }
+            _prev_mouse = glm::vec2(mouse.x,mouse.y);
+            _isFirst = false;
+        }
+    }
     return true;
 }
 bool App::onExit() {

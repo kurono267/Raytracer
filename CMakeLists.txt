@@ -11,5 +11,5 @@ set(EXECUTABLE_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/bin)
 include_directories(${GLFW_INCLUDE_DIRS} ${GLM_INCLUDE_DIRS} ${Vulkan_INCLUDE_DIR})
 
-add_executable(Raytracer src/main.cpp src/App.cpp)
+add_executable(Raytracer src/app/main.cpp src/app/App.cpp)
 target_link_libraries(Raytracer mango)
