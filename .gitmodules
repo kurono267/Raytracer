@@ -1,0 +1,3 @@
+[submodule "external/Mango"]
+	path = external/Mango
+	url = https://github.com/kurono267/Mango.git
