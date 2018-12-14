@@ -131,3 +131,8 @@ bool App::onExit() {
     return true;
 }
 
+bool App::onScroll(const glm::vec2 &offset) {
+    _camera->scale(offset.y,_dt);
+    return true;
+}
+

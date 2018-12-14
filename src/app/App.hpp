@@ -26,6 +26,7 @@ public:
     bool onKey(const GLFWKey& key) final;
     bool onMouse(const GLFWMouse& mouse) final;
     bool onExit() final;
+    bool onScroll(const glm::vec2& offset) final;
 protected:
     std::unique_ptr<Instance> _instance;
 

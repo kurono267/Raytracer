@@ -19,14 +19,6 @@ std::ostream& operator<<(std::ostream& os, const BVHNode& n){
 	return os;
 }
 
-glm::vec3 vmin(const glm::vec3& a,const glm::vec3& b){
-	return glm::vec3(fmin(a.x,b.x),fmin(a.y,b.y),fmin(a.z,b.z));
-}
-
-glm::vec3 vmax(const glm::vec3& a,const glm::vec3& b){
-	return glm::vec3(fmax(a.x,b.x),fmax(a.y,b.y),fmax(a.z,b.z));
-}
-
 inline float SurfaceArea(const BVHNode& n){
 	glm::vec3 sides(n.max-n.min);
 	return 2*(sides.x*sides.y+sides.y*sides.z+sides.x*sides.z);
@@ -83,38 +75,10 @@ void BVH::run(const spScene& scene){
     _nodes[rootId] = root;
 }
 
-struct AABB {
-    AABB() : min(std::numeric_limits<float>::infinity()), max(-std::numeric_limits<float>::infinity()) {}
-    AABB(const BVHNode& node) : min(node.min.x,node.min.y,node.min.z), max(node.max.x,node.max.y,node.max.z) {}
-    AABB(const AABB& a) : min(a.min), max(a.max) {}
-
-    void expand(const glm::vec3& _min,const glm::vec3& _max){
-        min = vmin(_min,min);
-        max = vmax(_max,max);
-    }
-    void expand(const glm::vec3& _p){
-        min = vmin(_p,min);
-        max = vmax(_p,max);
-    }
-
-    uint32_t maxDim(){
-        glm::vec3 axisSize = max-min;
-        if(axisSize.x <= axisSize.y){
-            if(axisSize.y >= axisSize.z)return 1; // Y axis
-        } else {
-            if(axisSize.x >= axisSize.z)return 0; // X axis
-        }
-        return 2; // Z axis Z more then other
-    }
-
-    glm::vec3 min;
-    glm::vec3 max;
-};
-
-void BVH::recursive(BVHNode& root, std::vector<Prim>& primitives, const uint32_t start, const uint32_t end, const int depth, const uint& mesh_id){
+void BVH::recursive(BVHNode& root, std::vector<Prim>& primitives, uint32_t start, uint32_t end, int depth, uint mesh_id){
     if(_maxDepth < depth)_maxDepth = depth;
-    AABB aabb;
-    AABB centroid;
+    BBox aabb;
+    BBox centroid;
     // Recompute BBox
     for(int i = start;i<end;++i){
         const Prim& p = primitives[i];
@@ -185,5 +149,88 @@ std::vector<BVHNode>& BVH::nodes(){
 
 size_t BVH::rootID(){
 	return rootId;
+}
+
+const int MAX_STACK = 10;
+struct Stack {
+    int nodes[MAX_STACK];
+    int top;
+} stack;
+
+void add_stack(int id){
+    if(stack.top < MAX_STACK-1){
+        stack.nodes[++stack.top] = id;
+    }
+}
+
+using namespace glm;
+
+RayHit BVH::intersect(const Ray &ray) {
+    // Check root, if not return
+    RayHit hit = intersectBBox(ray,_nodes[rootId]);
+    if(!hit.status)return hit;
+
+    hit.status = false;
+    hit.dist   = std::numeric_limits<float>::infinity();
+
+    stack.nodes[0] = rootId;
+    stack.top = 0;
+
+    RayHit test;BVHNode curr;
+    int currId;
+    // Max steps for debug
+    uint step = 0;
+    while(stack.top >= 0){
+        step++;
+        // Get Top element from stack
+        currId = stack.nodes[stack.top--];
+        curr  = _nodes[currId];
+
+        if(curr.max.w == 1.0f){ // Leaf
+            // Check triangles
+            test = intersectBBox(ray,curr);
+            if(test.dist < hit.dist){
+                hit = test;
+                //break;
+                /*ivec4 triIds = curr.data;
+                for(int i = 0;i<4;++i){
+                    int triId = triIds[i];
+                    if(triId >= 0){
+                        Vertex vp0 = convert(vertexes[indexes[triId+0]]);Vertex vp1 = convert(vertexes[indexes[triId+1]]);Vertex vp2 = convert(vertexes[indexes[triId+2]]);
+                        test = intersect(ray,vp0.pos,vp1.pos,vp2.pos);
+                        if(test.dist < hit.dist){
+                            hit = test;
+                            hit.id1 = triId;
+                            //break;
+                        }
+                    }
+                }*/
+            }
+        } else {
+            // Check left and right child
+            int leftID  = curr.data.x;
+            int rightID = curr.data.y;
+
+            RayHit left = intersectBBox(ray,_nodes[leftID]);
+            RayHit right = intersectBBox(ray,_nodes[rightID]);
+
+            bool leftStatus  = left.dist < hit.dist;
+            bool rightStatus = right.dist < hit.dist;
+
+            if(leftStatus && rightStatus){
+                // Left child always neares, if not swap
+                if(right.dist < left.dist){
+                    int tmp = leftID;
+                    leftID  = rightID;
+                    rightID = tmp;
+                }
+                add_stack(rightID);
+                add_stack(leftID); // Left ID at top
+            } else if(leftStatus)add_stack(leftID);
+            else if(rightStatus)add_stack(rightID);
+        }
+
+    }
+    return hit;
 }
 

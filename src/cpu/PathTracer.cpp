@@ -26,9 +26,35 @@ void PathTracer::sync() {
 }
 
 void PathTracer::update(const mango::scene::spCamera& camera){
+    auto right = camera->getRight();
+    auto forward = camera->getForward();
+    auto pos = camera->getPos();
+    auto up = camera->getUp();
+
     for(int y = 0;y<PT_HEIGHT;++y){
         for(int x = 0;x<PT_WIDTH;++x){
-            (*_frame)(x,y) = glm::vec4(_time,_time,_time,1.0f);
+            float normalized_i = ((float)x / (float)PT_WIDTH) - 0.5f;
+            float normalized_j = ((float)y / (float)PT_HEIGHT) - 0.5f;
+            normalized_j = -normalized_j;
+            normalized_j *= ((float)PT_HEIGHT/(float)PT_WIDTH);
+            glm::vec3 image_point = normalized_i*right +
+                               normalized_j*up
+                               + forward;
+            glm::vec3 ray_direction = normalize(image_point);
+
+            Ray r;
+            r.org = pos;
+            r.dir = ray_direction;
+
+            RayHit hit = _bvh.intersect(r);
+            if(hit.status){
+                auto point = r.org+r.dir*hit.dist;
+                point /= 20.0f;
+                (*_frame)(x,y) = glm::vec4(glm::pow(point*0.5f+0.5f,glm::vec3(1.0f/2.4f)),1.0f);
+            } else {
+                (*_frame)(x,y) = glm::vec4(0.0f);
+            }
+            //(*_frame)(x,y) = glm::vec4(ray_direction,1.0f);
         }
     }
     _time += 0.01f;
