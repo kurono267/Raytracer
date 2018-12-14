@@ -6,8 +6,6 @@
 
 #define NODE_MAX_TRIANGLE 4 // Max triangle in node
 
-namespace r267 {
-
 struct BVHNode {
 	BVHNode() : data(-1){}
 	BVHNode(const BVHNode& n) : min(n.min),max(n.max),data(n.data) {}
@@ -56,5 +54,3 @@ class BVH {
 		std::vector<BVH>     _meshes;
 		size_t			     _maxDepth;
 };
-
-}

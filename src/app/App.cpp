@@ -20,13 +20,17 @@ bool App::init() {
     _camera = std::make_shared<CameraAtPoint>(device,glm::vec3(0.0f));
     _camera->initProj(glm::radians(45.0f),(float)(1280)/(float)(720),0.1f,1000.0f);
 
-    _scene.load("models/lambo/lambo");
-    for(auto model : _scene.models()){
+    _scene = std::make_shared<Scene>();
+    _scene->load("models/lambo/lambo");
+    for(auto model : _scene->models()){
         _sceneGPU.push_back(createMesh(device,model->mesh()));
     }
 
+    _pt = std::make_shared<PathTracer>(device,_scene);
+    _pt->init();
+
     _texture = checkboardTexture(device, 1280, 720, 100);
-    auto texView = _texture->createTextureView();
+    auto texView = _pt->getTexture()->createTextureView();
 
     _descSet = device->createDescSet();
     _descSet->setUniformBuffer(_camera->getCameraUniform(), 0, ShaderStage::Vertex);
@@ -34,11 +38,12 @@ bool App::init() {
     _descSet->create();
 
     _main = device->createPipeline(rp);
-    _main->addShader(ShaderStage::Vertex, "../glsl/cube.vert");
-    _main->addShader(ShaderStage::Fragment, "../glsl/cube.frag");
+    _main->addShader(ShaderStage::Vertex, "../glsl/quad.vert");
+    _main->addShader(ShaderStage::Fragment, "../glsl/quad.frag");
     _main->setDescSet(_descSet);
 
     _cube = createCube(device);
+    _quad = createQuad(device);
 
     spRenderPass renderPass = device->getScreenRenderPass();
 
@@ -62,9 +67,10 @@ bool App::init() {
         _cmdScreen[i]->bindPipeline(_main);
         _cmdScreen[i]->bindDescriptorSet(_main, _descSet);
         //_cube->draw(_cmdScreen[i]);
-        for(int m = 0;m<_sceneGPU.size();++m){
+        /*for(int m = 0;m<_sceneGPU.size();++m){
             _sceneGPU[m]->draw(_cmdScreen[i]);
-        }
+        }*/
+        _quad->draw(_cmdScreen[i]);
         _cmdScreen[i]->endRenderPass();
 
         _cmdScreen[i]->end();
@@ -93,6 +99,8 @@ bool App::draw() {
 
 bool App::update() {
     _camera->updateUniform();
+    _pt->update(_camera);
+    _pt->sync();
     return true;
 }
 

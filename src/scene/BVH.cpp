@@ -1,17 +1,15 @@
 #include "BVH.hpp"
 
-using namespace r267;
-
 BVH::BVH() {}
 
 BVH::~BVH(){}
 
-std::ostream& r267::operator<<(std::ostream& os,const glm::vec3& v){
+std::ostream& operator<<(std::ostream& os,const glm::vec3& v){
 	os << v.x << "," << v.y << "," << v.z;
 	return os;
 }
 
-std::ostream& r267::operator<<(std::ostream& os, const BVHNode& n){
+std::ostream& operator<<(std::ostream& os, const BVHNode& n){
 	os << "NODE" << std::endl;
     glm::vec3 tmp = glm::vec3(n.min);
 	os << "MIN:" << tmp << std::endl;

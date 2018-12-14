@@ -17,7 +17,7 @@ set(SCENE_SRC
         src/scene/Model.cpp
         src/scene/Scene.cpp
         src/scene/MeshCPU.cpp
-)
+        src/cpu/PathTracer.cpp src/cpu/PathTracer.hpp)
 
 add_executable(Raytracer src/app/main.cpp src/app/App.cpp ${SCENE_SRC})
 target_link_libraries(Raytracer mango boost_filesystem boost_system)

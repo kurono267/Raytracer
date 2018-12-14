@@ -9,6 +9,7 @@
 #include <mango.hpp>
 #include "scene/Camera.hpp"
 #include "../scene/Scene.hpp"
+#include "../cpu/PathTracer.hpp"
 
 using namespace mango;
 using namespace mango::scene;
@@ -30,9 +31,14 @@ protected:
 
     spPipeline _main;
     std::vector<spCommandBuffer> _cmdScreen;
+
     spMesh _cube;
+    spMesh _quad;
+
+    spPathTracer _pt;
+
     spTexture _texture;
-    Scene _scene;
+    spScene _scene;
     std::vector<spMesh> _sceneGPU;
 
     std::shared_ptr<Camera> _camera;
