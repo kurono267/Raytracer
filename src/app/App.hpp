@@ -8,6 +8,7 @@
 #define MANGO_VULKAN
 #include <mango.hpp>
 #include "scene/Camera.hpp"
+#include "../scene/Scene.hpp"
 
 using namespace mango;
 using namespace mango::scene;
@@ -31,6 +32,8 @@ protected:
     std::vector<spCommandBuffer> _cmdScreen;
     spMesh _cube;
     spTexture _texture;
+    Scene _scene;
+    std::vector<spMesh> _sceneGPU;
 
     std::shared_ptr<Camera> _camera;
 

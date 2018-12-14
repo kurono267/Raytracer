@@ -20,6 +20,11 @@ bool App::init() {
     _camera = std::make_shared<CameraAtPoint>(device,glm::vec3(0.0f));
     _camera->initProj(glm::radians(45.0f),(float)(1280)/(float)(720),0.1f,1000.0f);
 
+    _scene.load("models/lambo/lambo");
+    for(auto model : _scene.models()){
+        _sceneGPU.push_back(createMesh(device,model->mesh()));
+    }
+
     _texture = checkboardTexture(device, 1280, 720, 100);
     auto texView = _texture->createTextureView();
 
@@ -56,7 +61,10 @@ bool App::init() {
                                        RenderArea(screenBuffers[i]->getSize(), glm::ivec2(0)));
         _cmdScreen[i]->bindPipeline(_main);
         _cmdScreen[i]->bindDescriptorSet(_main, _descSet);
-        _cube->draw(_cmdScreen[i]);
+        //_cube->draw(_cmdScreen[i]);
+        for(int m = 0;m<_sceneGPU.size();++m){
+            _sceneGPU[m]->draw(_cmdScreen[i]);
+        }
         _cmdScreen[i]->endRenderPass();
 
         _cmdScreen[i]->end();

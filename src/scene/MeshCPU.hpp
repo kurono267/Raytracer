@@ -34,3 +34,5 @@ class MeshCPU {
 };
 
 typedef std::shared_ptr<MeshCPU> spMeshCPU;
+
+mango::spMesh createMesh(const mango::spDevice& device,const spMeshCPU& meshCPU);

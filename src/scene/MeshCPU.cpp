@@ -130,3 +130,9 @@ std::vector<sVertex>  MeshCPU::vertexes(){
 std::vector<uint32_t> MeshCPU::indexes(){
 	return _indexes;
 }
+
+mango::spMesh createMesh(const mango::spDevice& device,const spMeshCPU& meshCPU){
+	mango::spMesh mesh = std::make_shared<mango::Mesh>();
+	mesh->create(device,meshCPU->vertexes(),meshCPU->indexes());
+	return mesh;
+}
