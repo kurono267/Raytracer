@@ -7,8 +7,8 @@
 #include "../scene/Scene.hpp"
 #include "../scene/BVH.hpp"
 
-const int PT_WIDTH = 128;
-const int PT_HEIGHT = 72;
+const int PT_WIDTH = 128*2;
+const int PT_HEIGHT = 72*2;
 
 class PathTracer {
 public:

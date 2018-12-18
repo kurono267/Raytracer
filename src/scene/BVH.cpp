@@ -103,15 +103,17 @@ void BVH::recursive(BVHNode& root, std::vector<Prim>& primitives, uint32_t start
     }
 
     // Right node
+    BVHNode left;
+    _nodes.push_back(left);
+    root.data.left = _nodes.size()-1;
     BVHNode right;
-    recursive(right, primitives, mid, end, depth + 1, mesh_id);
     _nodes.push_back(right);
     root.data.right = _nodes.size() - 1;
 
-    BVHNode left;
     recursive(left,primitives,start,mid,depth+1,mesh_id);
-    _nodes.push_back(left);
-    root.data.left = _nodes.size()-1;
+    recursive(right, primitives, mid, end, depth + 1, mesh_id);
+    _nodes[root.data.left] = left;
+    _nodes[root.data.right] = right;
 
     // Fill additional data to node
     root.data.depth = depth;
