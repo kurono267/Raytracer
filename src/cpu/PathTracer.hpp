@@ -30,8 +30,6 @@ private:
     spImage4f _frame;
     spTexture _texture;
     spBuffer  _textureCPU;
-
-    float _time = 0.0f;
 };
 
 typedef std::shared_ptr<PathTracer> spPathTracer;

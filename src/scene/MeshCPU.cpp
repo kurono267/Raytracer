@@ -124,10 +124,10 @@ bool MeshCPU::equal(const std::shared_ptr<MeshCPU> other){
 std::string MeshCPU::name(){
 	return _name;
 }
-std::vector<sVertex>  MeshCPU::vertexes(){
+std::vector<sVertex>&  MeshCPU::vertexes(){
 	return _vertexes;
 }
-std::vector<uint32_t> MeshCPU::indexes(){
+std::vector<uint32_t>& MeshCPU::indexes(){
 	return _indexes;
 }
 

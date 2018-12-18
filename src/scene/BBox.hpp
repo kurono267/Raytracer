@@ -6,23 +6,8 @@
 
 #include <mango.hpp>
 
-struct BVHNode {
-    BVHNode() : data(-1){}
-    BVHNode(const BVHNode& n) : min(n.min),max(n.max),data(n.data) {}
-
-    // Alligned BVH Node
-    glm::vec4 min; // xyz min, w split
-    glm::vec4 max; // xyz max, w 1 if leaf
-
-    // Data changes by leaf or not current node
-    // If Leaf x,y,z,w index of triangle
-    // If Not leaf x,y r leaf, l leaf, z - meshID, w - depth
-    glm::ivec4 data;
-};
-
 struct BBox {
     BBox();
-    BBox(const BVHNode& node);
     BBox(const BBox& a);
 
     void expand(const glm::vec3& _min,const glm::vec3& _max);
@@ -32,4 +17,31 @@ struct BBox {
 
     glm::vec3 min;
     glm::vec3 max;
+};
+
+struct BVHNode {
+    BVHNode(){
+        for(int i = 0;i<4;++i)triIds[i] = -1;
+        isLeaf = false;
+    }
+    BVHNode(const BVHNode& n) : box(n.box),data(n.data),isLeaf(n.isLeaf),split(n.split) {}
+
+    // Alligned BVH Node
+    BBox box;
+
+    // Data changes by leaf or not current node
+    // If Leaf x,y,z,w index of triangle
+    // If Not leaf x,y r leaf, l leaf, z - meshID, w - depth
+    union {
+        int32_t triIds[4];
+        struct {
+            int32_t right;
+            int32_t left;
+            int32_t meshID;
+            int32_t depth;
+        } data;
+    };
+
+    float split;
+    bool isLeaf;
 };

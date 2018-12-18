@@ -17,7 +17,7 @@ bool App::init() {
     rp.viewport(Viewport(glm::vec2(0), mainWnd->wndSize()));
     rp.scissor(glm::ivec2(0), mainWnd->wndSize());
 
-    _camera = std::make_shared<CameraAtPoint>(device,glm::vec3(0.0f));
+    _camera = std::make_shared<CameraAtPoint>(device,glm::vec3(11, 4, -6));
     _camera->initProj(glm::radians(45.0f),(float)(1280)/(float)(720),0.1f,1000.0f);
 
     _scene = std::make_shared<Scene>();
@@ -98,6 +98,7 @@ bool App::draw() {
 }
 
 bool App::update() {
+    std::cout << "CameraPos: " << glm::to_string(_camera->getPos()) << std::endl;
     _camera->updateUniform();
     _pt->update(_camera);
     _pt->sync();

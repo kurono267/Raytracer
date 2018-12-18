@@ -18,6 +18,8 @@ struct RayHit {
     float dist;
     int id0;
     int id1;
+
+    glm::vec3 bc;
 };
 
 RayHit intersectBBox(const Ray& ray,const BBox& box);

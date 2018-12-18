@@ -1,72 +1,56 @@
 #include "BVH.hpp"
+#include "BBox.hpp"
 
 BVH::BVH() {}
 
 BVH::~BVH(){}
 
-std::ostream& operator<<(std::ostream& os,const glm::vec3& v){
-	os << v.x << "," << v.y << "," << v.z;
-	return os;
-}
-
 std::ostream& operator<<(std::ostream& os, const BVHNode& n){
 	os << "NODE" << std::endl;
-    glm::vec3 tmp = glm::vec3(n.min);
-	os << "MIN:" << tmp << std::endl;
-    tmp = glm::vec3(n.max);
-	os << "MAX:" << tmp << std::endl;
-	if(n.max.w == 1.0f)os << "DEPTH:" << n.data.w << std::endl;
+	os << "MIN:" << glm::to_string(n.box.min) << std::endl;
+	os << "MAX:" << glm::to_string(n.box.max) << std::endl;
+	if(n.isLeaf == 1.0f)os << "DEPTH:" << n.data.depth << std::endl;
 	return os;
 }
 
 inline float SurfaceArea(const BVHNode& n){
-	glm::vec3 sides(n.max-n.min);
+	glm::vec3 sides(n.box.max-n.box.min);
 	return 2*(sides.x*sides.y+sides.y*sides.z+sides.x*sides.z);
 }
 
+BVH::Prim::Prim() {
+    minBox = glm::vec3(std::numeric_limits<float>::infinity());
+    maxBox = glm::vec3(-std::numeric_limits<float>::infinity());
+    center = glm::vec3(0.f);
+}
+
 void BVH::run(const spScene& scene){
-    // Create BVHs for meshes in scene
-    _meshes.resize(scene->models().size());
-    _meshIDs.resize(_meshes.size());
-    std::vector<Prim> scene_prims(_meshes.size());
-    uint32_t ibOffset = 0;
-    for(uint32_t i = 0;i<_meshes.size();++i){
-        spModel model = scene->models()[i];
-        spMeshCPU  mesh = model->mesh();
-
-        auto vertexes  = mesh->vertexes();
-        auto indexes = mesh->indexes();
-
-        uint32_t numTriangles = indexes.size()/3;
-
-        for(int i = 0;i<numTriangles;++i){
-            int startTriangle = i*3;
-            uint32_t v0 = indexes[startTriangle];
-
+    std::vector<Prim> scene_prims;
+    // All meshes in scene to one
+    for(const auto& model : scene->models()){
+        auto mesh = model->mesh();
+        auto vbOffset = _vertices.size();
+        auto ibOffset = _indices.size();
+        std::copy(mesh->vertexes().begin(),mesh->vertexes().end(),back_inserter(_vertices));
+        const auto& indices = mesh->indexes();
+        for(int i = 0;i<indices.size();i+=3){
             Prim prim;
-
-            glm::vec3 v0pos = vertexes[v0].pos;
-            prim.minBox = v0pos;
-            prim.maxBox = v0pos;
-            prim.center = v0pos;
-            prim.id = startTriangle+ibOffset;
-            for(int v = 1;v<3;++v){
-                glm::vec3 pos = vertexes[indexes[startTriangle+v]].pos;
-                prim.minBox = min(prim.minBox,pos);
-                prim.maxBox = max(prim.maxBox,pos);
-                prim.center += pos;
+            for(int v = 0;v<3;++v){
+                auto index = indices[i+v];
+                _indices.emplace_back(static_cast<uint32_t>(vbOffset + index));
+                auto vPos = mesh->vertexes()[index].pos;
+                prim.minBox = glm::min(prim.minBox,vPos);
+                prim.maxBox = glm::max(prim.maxBox,vPos);
+                prim.center += vPos;
             }
+            prim.id = static_cast<int>(ibOffset + i);
             prim.center /= 3.0f;
             scene_prims.push_back(prim);
         }
-
-
-        ibOffset += mesh->indexes().size();
     }
 
     BVHNode root;
-    root.data = glm::ivec4(0);
-    _nodes.push_back(root);
+    _nodes.emplace_back();
     rootId = _nodes.size()-1;
     _maxDepth = 0;
 
@@ -85,19 +69,17 @@ void BVH::recursive(BVHNode& root, std::vector<Prim>& primitives, uint32_t start
         aabb.expand(p.minBox,p.maxBox);
         centroid.expand(p.center);
     }
-    root.min = glm::vec4(aabb.min,0.0f);
-    root.max = glm::vec4(aabb.max,0.0f);
-    root.data = glm::ivec4(-1);
+    root.box = aabb;
 
     // Check leaf
     uint32_t size = end-start;
     if(size <= NODE_MAX_TRIANGLE){
-        root.max.w = 1.0f;
+        root.isLeaf = true;
         for(uint32_t i = 0;i<NODE_MAX_TRIANGLE;++i){
             if(i < size){
-                root.data[i] = primitives[start+i].id;
+                root.triIds[i] = primitives[start+i].id;
             }
-            else root.data[i] = -1;
+            else root.triIds[i] = -1;
         }
         return;
     }
@@ -124,17 +106,16 @@ void BVH::recursive(BVHNode& root, std::vector<Prim>& primitives, uint32_t start
     BVHNode right;
     recursive(right, primitives, mid, end, depth + 1, mesh_id);
     _nodes.push_back(right);
-    root.data.y = _nodes.size() - 1;
+    root.data.right = _nodes.size() - 1;
 
     BVHNode left;
     recursive(left,primitives,start,mid,depth+1,mesh_id);
     _nodes.push_back(left);
-    root.data.x = _nodes.size()-1;
+    root.data.left = _nodes.size()-1;
 
     // Fill additional data to node
-    root.data.z = axis; // Axis
-    root.data.w = depth;
-    root.min.w  = split;
+    root.data.depth = depth;
+    root.split  = split;
 }
 
 inline bool check(const glm::vec3& pos,const glm::vec3& min,const glm::vec3 max){
@@ -151,7 +132,7 @@ size_t BVH::rootID(){
 	return rootId;
 }
 
-const int MAX_STACK = 10;
+const int MAX_STACK = 64;
 struct Stack {
     int nodes[MAX_STACK];
     int top;
@@ -165,9 +146,9 @@ void add_stack(int id){
 
 using namespace glm;
 
-RayHit BVH::intersect(const Ray &ray) {
+RayHit BVH::intersectWithStack(const Ray &ray) {
     // Check root, if not return
-    RayHit hit = intersectBBox(ray,_nodes[rootId]);
+    RayHit hit = intersectBBox(ray,_nodes[rootId].box);
     if(!hit.status)return hit;
 
     hit.status = false;
@@ -186,36 +167,35 @@ RayHit BVH::intersect(const Ray &ray) {
         currId = stack.nodes[stack.top--];
         curr  = _nodes[currId];
 
-        if(curr.max.w == 1.0f){ // Leaf
+        if(curr.isLeaf){ // Leaf
             // Check triangles
-            test = intersectBBox(ray,curr);
-            if(test.dist < hit.dist){
-                hit = test;
-                //break;
-                /*ivec4 triIds = curr.data;
+            test = intersectBBox(ray,curr.box);
+            if(test.dist < hit.dist && test.dist > 0.0f){
+                auto triIds = curr.triIds;
                 for(int i = 0;i<4;++i){
                     int triId = triIds[i];
                     if(triId >= 0){
-                        Vertex vp0 = convert(vertexes[indexes[triId+0]]);Vertex vp1 = convert(vertexes[indexes[triId+1]]);Vertex vp2 = convert(vertexes[indexes[triId+2]]);
-                        test = intersect(ray,vp0.pos,vp1.pos,vp2.pos);
-                        if(test.dist < hit.dist){
+                        auto id0 = _indices[triId]; auto id1 = _indices[triId+1]; auto id2 = _indices[triId+2];
+                        auto vp0 = _vertices[id0]; auto vp1 = _vertices[id1]; auto vp2 = _vertices[id2];
+                        test = intersectTriangle(ray,vp0.pos,vp1.pos,vp2.pos);
+                        if(test.dist < hit.dist && test.dist > 0.0f){
                             hit = test;
                             hit.id1 = triId;
                             //break;
                         }
                     }
-                }*/
+                }
             }
         } else {
             // Check left and right child
-            int leftID  = curr.data.x;
-            int rightID = curr.data.y;
+            int leftID  = curr.data.left;
+            int rightID = curr.data.right;
 
-            RayHit left = intersectBBox(ray,_nodes[leftID]);
-            RayHit right = intersectBBox(ray,_nodes[rightID]);
+            RayHit left = intersectBBox(ray,_nodes[leftID].box);
+            RayHit right = intersectBBox(ray,_nodes[rightID].box);
 
-            bool leftStatus  = left.dist < hit.dist;
-            bool rightStatus = right.dist < hit.dist;
+            bool leftStatus  = left.dist < hit.dist && left.dist > 0.0f;
+            bool rightStatus = right.dist < hit.dist && right.dist > 0.0f;
 
             if(leftStatus && rightStatus){
                 // Left child always neares, if not swap
@@ -234,3 +214,74 @@ RayHit BVH::intersect(const Ray &ray) {
     return hit;
 }
 
+RayHit BVH::intersect(const Ray &ray) {
+    // Check root, if not return
+    auto rootNode = _nodes[rootId];
+    RayHit hit = intersectBBox(ray,_nodes[rootId].box);
+    if(!hit.status)return hit;
+
+    hit.status = false;
+    hit.dist   = std::numeric_limits<float>::infinity();
+
+    intersect(ray,hit,rootNode);
+
+    return hit;
+}
+
+void BVH::intersect(const Ray &ray, RayHit& hit, BVHNode &curr) {
+    if(curr.isLeaf){ // Leaf
+        // Check triangles
+        auto test = intersectBBox(ray,curr.box);
+        if(test.dist < hit.dist && test.dist > 0.0f){
+            auto triIds = curr.triIds;
+            for(int i = 0;i<4;++i){
+                int triId = triIds[i];
+                if(triId >= 0){
+                    auto id0 = _indices[triId]; auto id1 = _indices[triId+1]; auto id2 = _indices[triId+2];
+                    auto vp0 = _vertices[id0]; auto vp1 = _vertices[id1]; auto vp2 = _vertices[id2];
+                    test = intersectTriangle(ray,vp0.pos,vp1.pos,vp2.pos);
+                    if(test.dist < hit.dist && test.dist > 0.0f){
+                        hit = test;
+                        hit.id1 = triId;
+                        //break;
+                    }
+                }
+            }
+        }
+    } else {
+        // Check left and right child
+        int leftID  = curr.data.left;
+        int rightID = curr.data.right;
+
+        auto leftNode = _nodes[leftID];
+        auto rightNode = _nodes[rightID];
+
+        RayHit left = intersectBBox(ray,_nodes[leftID].box);
+        RayHit right = intersectBBox(ray,_nodes[rightID].box);
+
+        bool leftStatus  = left.dist < hit.dist && left.dist > 0.0f;
+        bool rightStatus = right.dist < hit.dist && right.dist > 0.0f;
+
+        if(leftStatus && rightStatus){
+            // Left child always nearest, if not swap
+            if(right.dist < left.dist){
+                std::swap(leftNode,rightNode);
+            }
+            intersect(ray,hit,leftNode);
+            intersect(ray,hit,rightNode);
+        } else if(leftStatus)intersect(ray,hit,leftNode);
+        else if(rightStatus)intersect(ray,hit,rightNode);
+    }
+}
+
+sVertex BVH::postIntersect(const Ray &ray,const RayHit &hit) {
+    sVertex hitVertex;
+    hitVertex.pos = ray.org+ray.dir*hit.dist;
+    for(int v = 0;v<3;++v){
+        const auto& id = _indices[hit.id1+v];
+        const auto& vert = _vertices[id];
+        hitVertex.normal += vert.normal*hit.bc[v];
+        hitVertex.uv     += vert.uv*hit.bc[v];
+    }
+    return hitVertex;
+}

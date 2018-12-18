@@ -26,6 +26,7 @@ void PathTracer::sync() {
 }
 
 void PathTracer::update(const mango::scene::spCamera& camera){
+    auto start = std::chrono::system_clock::now();
     auto right = camera->getRight();
     auto forward = camera->getForward();
     auto pos = camera->getPos();
@@ -48,15 +49,15 @@ void PathTracer::update(const mango::scene::spCamera& camera){
 
             RayHit hit = _bvh.intersect(r);
             if(hit.status){
-                auto point = r.org+r.dir*hit.dist;
-                point /= 20.0f;
-                (*_frame)(x,y) = glm::vec4(glm::pow(point*0.5f+0.5f,glm::vec3(1.0f/2.4f)),1.0f);
+                sVertex hitVertex = _bvh.postIntersect(r,hit);
+                (*_frame)(x,y) = glm::vec4(glm::vec3(std::max(0.0f,glm::dot(hitVertex.normal,glm::vec3(0.0,1.0f,0.0f)))),1.0f);
             } else {
                 (*_frame)(x,y) = glm::vec4(0.0f);
             }
-            //(*_frame)(x,y) = glm::vec4(ray_direction,1.0f);
         }
     }
-    _time += 0.01f;
-    if(_time >= 1.0f)_time = 0.0f;
+    auto end = std::chrono::system_clock::now();
+    float frameTime = std::chrono::duration_cast<std::chrono::duration<float> >(end-start).count();
+    std::cout << "PT Time:" << frameTime*1000.0f << " ms" << std::endl;
+    std::cout << "FPS: " << 1.0f/frameTime << std::endl;
 }

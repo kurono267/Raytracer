@@ -25,5 +25,3 @@ uint32_t BBox::maxDim(){
     }
     return 2; // Z axis Z more then other
 }
-
-BBox::BBox(const BVHNode& node) : min(node.min.x,node.min.y,node.min.z), max(node.max.x,node.max.y,node.max.z) {}

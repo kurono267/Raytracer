@@ -12,8 +12,8 @@ class MeshCPU {
 		void setData(const std::vector<mango::sVertex>& vertexes,const std::vector<uint32_t>& indexes,const std::string& name); // Set Unpacked data
 
 		std::string           name();
-		std::vector<mango::sVertex>  vertexes();
-		std::vector<uint32_t> indexes();
+		std::vector<mango::sVertex>&  vertexes();
+		std::vector<uint32_t>& indexes();
 
 		bool equal(const std::shared_ptr<MeshCPU> other);
 
