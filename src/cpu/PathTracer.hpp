@@ -7,8 +7,8 @@
 #include "../scene/Scene.hpp"
 #include "../scene/BVH.hpp"
 
-const int PT_WIDTH = 128*2;
-const int PT_HEIGHT = 72*2;
+const int PT_WIDTH = 128*5;
+const int PT_HEIGHT = 72*5;
 
 class PathTracer {
 public:
@@ -21,6 +21,8 @@ public:
     void update(const mango::scene::spCamera& camera);
 
     void sync();
+private:
+    void computeTile(const glm::ivec2& start, const mango::scene::spCamera& camera);
 private:
     spDevice _device;
 
