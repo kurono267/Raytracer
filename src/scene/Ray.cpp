@@ -17,12 +17,8 @@ RayHit::RayHit(){
 RayHit intersectBBox(const Ray& ray,const BBox &box) {
     RayHit hit;
 
-    vec3 inv_dir = 1.0f/ray.dir;
-    //for(int i = 0;i<3;++i)
-    //    if(ray.dir[i] == 0.0f)inv_dir[i] = 0.0f;
-
-    vec3 lov = inv_dir*(box.min - ray.org);
-    vec3 hiv = inv_dir*(box.max - ray.org);
+    vec3 lov = ray.invdir*(box.min - ray.org);
+    vec3 hiv = ray.invdir*(box.max - ray.org);
 
     vec3 max_v = max(lov, hiv);
     vec3 min_v = min(lov, hiv);

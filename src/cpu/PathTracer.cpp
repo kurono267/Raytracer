@@ -9,7 +9,8 @@ PathTracer::PathTracer(const spDevice& device,const spScene &scene) : _scene(sce
 }
 
 void PathTracer::init() {
-    _bvh.run(_scene);
+    //_bvh.run(_scene);
+    _bvh.runLBVH(_scene);
 
     _texture = _device->createTexture(PT_WIDTH,PT_HEIGHT,1,Format::R32G32B32A32Sfloat,TextureType::Input);
     _frame = std::make_shared<Image4f>(glm::ivec2(PT_WIDTH,PT_HEIGHT),glm::vec4(0.0f));
@@ -43,9 +44,7 @@ void PathTracer::update(const mango::scene::spCamera& camera){
                                + forward;
             glm::vec3 ray_direction = normalize(image_point);
 
-            Ray r;
-            r.org = pos;
-            r.dir = ray_direction;
+            Ray r(pos,ray_direction);
 
             RayHit hit = _bvh.intersect(r);
             if(hit.status){

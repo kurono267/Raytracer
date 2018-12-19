@@ -5,7 +5,7 @@
 #include <algorithm>
 #include "Ray.hpp"
 
-#define NODE_MAX_TRIANGLE 4 // Max triangle in node
+#define NODE_MAX_TRIANGLE 1 // Max triangle in node
 
 std::ostream& operator<<(std::ostream& os,const glm::vec3& v);
 std::ostream& operator<<(std::ostream& os, const BVHNode& n);
@@ -20,6 +20,7 @@ class BVH {
             glm::vec3 center;
 
 			int id;
+			uint32_t mortonCode;
 		};
 
 		struct MeshID {
@@ -31,6 +32,7 @@ class BVH {
 		virtual ~BVH();
 
 		void run(const spScene& scene);
+		void runLBVH(const spScene& scene);
 
 		RayHit intersect(const Ray& ray);
         RayHit intersectWithStack(const Ray &ray);
@@ -39,8 +41,11 @@ class BVH {
 		std::vector<BVHNode>& nodes();
 		size_t rootID();
 	protected:
-		void recursive(BVHNode& root, std::vector<Prim>& primitives,uint32_t start, uint32_t end, int depth, uint mesh_id);
+		void recursive(BVHNode& root, std::vector<Prim>& primitives,uint32_t start, uint32_t end, int depth, uint mesh_id); // BVH
 		void intersect(const Ray& ray, RayHit& hit, BVHNode& node);
+
+        void recursiveLBVH(BVHNode& root, const std::vector<Prim>& primitives,uint32_t start, uint32_t end, int depth, uint mesh_id);
+        uint32_t findSplitLBVH(const std::vector<Prim>& primitives,uint32_t start, uint32_t end);
 
 		std::vector<uint32_t> _indices;
 		std::vector<sVertex>  _vertices;
