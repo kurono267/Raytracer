@@ -24,108 +24,6 @@ BVH::Prim::Prim() {
     center = glm::vec3(0.f);
 }
 
-void BVH::run(const spScene& scene){
-    std::vector<Prim> scene_prims;
-    // All meshes in scene to one
-    for(const auto& model : scene->models()){
-        auto mesh = model->mesh();
-        auto vbOffset = _vertices.size();
-        auto ibOffset = _indices.size();
-        std::copy(mesh->vertexes().begin(),mesh->vertexes().end(),back_inserter(_vertices));
-        const auto& indices = mesh->indexes();
-        for(int i = 0;i<indices.size();i+=3){
-            Prim prim;
-            for(int v = 0;v<3;++v){
-                auto index = indices[i+v];
-                _indices.emplace_back(static_cast<uint32_t>(vbOffset + index));
-                auto vPos = mesh->vertexes()[index].pos;
-                prim.minBox = glm::min(prim.minBox,vPos);
-                prim.maxBox = glm::max(prim.maxBox,vPos);
-                prim.center += vPos;
-            }
-            prim.id = static_cast<int>(ibOffset + i);
-            prim.center /= 3.0f;
-            scene_prims.push_back(prim);
-        }
-    }
-
-    BVHNode root;
-    _nodes.emplace_back();
-    rootId = _nodes.size()-1;
-    _maxDepth = 0;
-
-    recursive(root,scene_prims,0,scene_prims.size(),0,0);
-
-    _nodes[rootId] = root;
-}
-
-void BVH::recursive(BVHNode& root, std::vector<Prim>& primitives, uint32_t start, uint32_t end, int depth, uint mesh_id){
-    if(_maxDepth < depth)_maxDepth = depth;
-    BBox aabb;
-    BBox centroid;
-    // Recompute BBox
-    for(int i = start;i<end;++i){
-        const Prim& p = primitives[i];
-        aabb.expand(p.minBox,p.maxBox);
-        centroid.expand(p.center);
-    }
-    root.box = aabb;
-
-    // Check leaf
-    uint32_t size = end-start;
-    if(size <= NODE_MAX_TRIANGLE){
-        root.isLeaf = true;
-        for(uint32_t i = 0;i<NODE_MAX_TRIANGLE;++i){
-            if(i < size){
-                root.triIds[i] = primitives[start+i].id;
-            }
-            else root.triIds[i] = -1;
-        }
-        return;
-    }
-
-    // Split axis, max axis in AABB
-    uint32_t axis  = aabb.maxDim();
-
-    float    split = 0.5f*(aabb.max[axis]-aabb.min[axis]);
-
-    // Partly sort
-    uint32_t  mid = start;
-    for(uint32_t i = start;i<end;++i){
-        if(primitives[i].center[axis] < split){
-            std::iter_swap(primitives.begin()+i,primitives.begin()+mid);
-            ++mid;
-        }
-    }
-
-    if(mid == start || mid == end){
-        mid = start + (end-start)/2;
-    }
-
-    // Right node
-    BVHNode left;
-    _nodes.push_back(left);
-    root.data.left = _nodes.size()-1;
-    BVHNode right;
-    _nodes.push_back(right);
-    root.data.right = _nodes.size() - 1;
-
-    recursive(left,primitives,start,mid,depth+1,mesh_id);
-    recursive(right, primitives, mid, end, depth + 1, mesh_id);
-    _nodes[root.data.left] = left;
-    _nodes[root.data.right] = right;
-
-    // Fill additional data to node
-    root.data.depth = depth;
-    root.split  = split;
-}
-
-inline bool check(const glm::vec3& pos,const glm::vec3& min,const glm::vec3 max){
-	if(pos.x < min.x || pos.y < min.y || pos.z < min.z)return false;
-	if(pos.x > max.x || pos.y > max.y || pos.z > max.z)return false;
-	return true;
-}
-
 std::vector<BVHNode>& BVH::nodes(){
 	return _nodes;
 }
@@ -183,6 +81,7 @@ RayHit BVH::intersectWithStack(const Ray &ray) {
                         if(test.dist < hit.dist && test.dist > 0.0f){
                             hit = test;
                             hit.id1 = triId;
+                            hit.id0 = curr.modelIds[i];
                             //break;
                         }
                     }
@@ -245,6 +144,7 @@ void BVH::intersect(const Ray &ray, RayHit& hit, BVHNode &curr) {
                     if(test.dist < hit.dist && test.dist > 0.0f){
                         hit = test;
                         hit.id1 = triId;
+                        hit.id0 = curr.modelIds[i];
                         //break;
                     }
                 }
@@ -359,6 +259,7 @@ void BVH::recursiveLBVH(BVHNode& root, const std::vector<Prim>& primitives,uint3
         for(uint32_t i = 0;i<NODE_MAX_TRIANGLE;++i){
             if(i < size){
                 root.triIds[i] = primitives[start+i].id;
+                root.modelIds[i] = primitives[start+i].modelId;
             }
             else root.triIds[i] = -1;
         }
@@ -386,8 +287,10 @@ void BVH::recursiveLBVH(BVHNode& root, const std::vector<Prim>& primitives,uint3
 }
 
 void BVH::runLBVH(const spScene &scene) {
+    _scene = scene;
     std::vector<Prim> scene_prims;
     BBox mainBox;
+    int modelId = 0;
     // All meshes in scene to one
     for(const auto& model : scene->models()){
         auto mesh = model->mesh();
@@ -406,11 +309,13 @@ void BVH::runLBVH(const spScene &scene) {
                 prim.center += vPos;
             }
             prim.id = static_cast<int>(ibOffset + i);
+            prim.modelId = modelId;
             mainBox.min = glm::min(prim.minBox,mainBox.min);
             mainBox.max = glm::max(prim.maxBox,mainBox.max);
             prim.center /= 3.0f;
             scene_prims.push_back(prim);
         }
+        modelId++;
     }
 
     for(auto& p : scene_prims){
@@ -430,6 +335,10 @@ void BVH::runLBVH(const spScene &scene) {
     recursiveLBVH(root,scene_prims,0,scene_prims.size()-1,0,0);
 
     _nodes[rootId] = root;
+}
+
+spScene BVH::getScene() {
+    return _scene;
 }
 
 

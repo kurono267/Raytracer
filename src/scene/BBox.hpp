@@ -22,9 +22,12 @@ struct BBox {
 struct BVHNode {
     BVHNode(){
         for(int i = 0;i<4;++i)triIds[i] = -1;
+        for(int i = 0;i<4;++i)modelIds[i] = -1;
         isLeaf = false;
     }
-    BVHNode(const BVHNode& n) : box(n.box),data(n.data),isLeaf(n.isLeaf),split(n.split) {}
+    BVHNode(const BVHNode& n) : box(n.box),data(n.data),isLeaf(n.isLeaf),split(n.split) {
+        for(int i = 0;i<4;++i)modelIds[i] = n.modelIds[i];
+    }
 
     // Alligned BVH Node
     BBox box;
@@ -41,6 +44,7 @@ struct BVHNode {
             int32_t depth;
         } data;
     };
+    int32_t modelIds[4];
 
     float split;
     bool isLeaf;

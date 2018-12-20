@@ -23,7 +23,7 @@ class Scene {
 
 		std::string getFilename();
 
-		std::vector<spModel> models();
+		std::vector<spModel>& models();
 		std::unordered_map<std::string,spMaterial>& materials();
 
 		bool equal(const std::shared_ptr<Scene>& scene);

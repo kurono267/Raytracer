@@ -127,7 +127,7 @@ std::string Scene::getFilename(){
 	return _filename;
 }
 
-std::vector<spModel> Scene::models(){
+std::vector<spModel>& Scene::models(){
 	return _models;
 }
 

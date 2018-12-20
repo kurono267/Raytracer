@@ -73,6 +73,8 @@ void PathTracer::computeTile(const glm::ivec2 &start, const mango::scene::spCame
     auto pos = camera->getPos();
     auto up = camera->getUp();
 
+    auto scene = _bvh.getScene();
+
     for(int y = start.y;y<start.y+tileSize;++y){
         if(y >= PT_HEIGHT)break;
         for(int x = start.x;x<start.x+tileSize;++x){
@@ -91,7 +93,18 @@ void PathTracer::computeTile(const glm::ivec2 &start, const mango::scene::spCame
             RayHit hit = _bvh.intersect(r);
             if(hit.status){
                 sVertex hitVertex = _bvh.postIntersect(r,hit);
-                (*_frame)(x,y) = glm::vec4(glm::vec3(std::max(0.0f,glm::dot(hitVertex.normal,glm::vec3(0.0,1.0f,0.0f)))),1.0f);
+
+                // Shading
+                auto model = scene->models()[hit.id0];
+                auto material = model->material();
+
+                float light = std::max(0.0f,glm::dot(hitVertex.normal,glm::vec3(0.0,1.0f,0.0f)));
+
+                glm::vec4 outColor(material->getDiffuseColor()*light,1.0f);
+
+                (*_frame)(x,y) = outColor;
+
+                //(*_frame)(x,y) = glm::vec4(glm::vec3(std::max(0.0f,glm::dot(hitVertex.normal,glm::vec3(0.0,1.0f,0.0f)))),1.0f);
             } else {
                 (*_frame)(x,y) = glm::vec4(0.0f);
             }

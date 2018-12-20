@@ -20,6 +20,7 @@ class BVH {
             glm::vec3 center;
 
 			int id;
+            int modelId;
 			uint32_t mortonCode;
 		};
 
@@ -38,6 +39,8 @@ class BVH {
         RayHit intersectWithStack(const Ray &ray);
 		sVertex postIntersect(const Ray &ray,const RayHit& hit);
 
+		spScene getScene();
+
 		std::vector<BVHNode>& nodes();
 		size_t rootID();
 	protected:
@@ -55,4 +58,6 @@ class BVH {
 		std::vector<MeshID>  _meshIDs;
 		std::vector<BVH>     _meshes;
 		size_t			     _maxDepth;
+
+		spScene _scene;
 };
