@@ -3,7 +3,7 @@
 using namespace boost::property_tree;
 using namespace mango;
 
-Material::Material(){
+Material::Material(const spImagesCache& cache) : _cache(cache) {
 	_data.diffuseColor = glm::vec4(1.0f);
 	_data.data         = glm::vec4(DefaultSurface, 0.5f, 0.5f, 0.0f);
 }
@@ -37,6 +37,16 @@ void Material::read(const ptree& tree){
 	_diffuseFilename = tree.get<std::string>("diffuseTexture","");
 	_normalFilename  = tree.get<std::string>("normalTexture","");
 	_heightmapFilename = tree.get<std::string>("heightmapTexture","");
+
+	if(!_diffuseFilename.empty()){
+		_diffTexture = _cache->load(_path+"/"+_diffuseFilename);
+	}
+	if(!_normalFilename.empty()){
+		_normalTexture = _cache->load(_path+"/"+_normalFilename);
+	}
+	if(!_heightmapFilename.empty()){
+		_heightmapTexture = _cache->load(_path+"/"+_heightmapFilename);
+	}
 }
 
 void Material::save(ptree& root,const std::string& object){
@@ -164,5 +174,17 @@ void Material::setHeightmapTexture(const std::string& filename){
 
 spDescSet Material::getDescSet(){
 	return _descSet;
+}
+
+spImage4b Material::getDiffuseTexture() {
+	return _diffTexture;
+}
+
+spImage4b Material::getNormalTexture() {
+	return _normalTexture;
+}
+
+spImage4b Material::getHeightmapTexture() {
+	return _heightmapTexture;
 }
 

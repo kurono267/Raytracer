@@ -98,12 +98,17 @@ void PathTracer::computeTile(const glm::ivec2 &start, const mango::scene::spCame
                 auto model = scene->models()[hit.id0];
                 auto material = model->material();
 
+                auto diffuseTexture = material->getDiffuseTexture();
+                auto repeatUV = glm::fract(hitVertex.uv);
+                glm::vec3 diffColor = diffuseTexture?(*diffuseTexture)(repeatUV):glm::vec3(255.0f);
+                diffColor /= 255.0f;
+
                 float light = std::max(0.0f,glm::dot(hitVertex.normal,glm::vec3(0.0,1.0f,0.0f)));
 
-                glm::vec4 outColor(material->getDiffuseColor()*light,1.0f);
+                glm::vec4 outColor(diffColor*material->getDiffuseColor()*light,1.0f);
 
+                //(*_frame)(x,y) = glm::vec4(hitVertex.uv.x,hitVertex.uv.y,1.0f,1.0f);
                 (*_frame)(x,y) = outColor;
-
                 //(*_frame)(x,y) = glm::vec4(glm::vec3(std::max(0.0f,glm::dot(hitVertex.normal,glm::vec3(0.0,1.0f,0.0f)))),1.0f);
             } else {
                 (*_frame)(x,y) = glm::vec4(0.0f);

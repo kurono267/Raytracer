@@ -3,7 +3,7 @@
 
 namespace fs = boost::filesystem;
 
-Scene::Scene(){}
+Scene::Scene() : _cache(std::make_shared<ImagesCache>()){}
 Scene::~Scene(){}
 
 void Scene::add(const spModel& model){
@@ -62,7 +62,7 @@ void Scene::load(const std::string& filename){
 	for(auto m : _models){
 		spMaterial material;
 		if(_materials.find(m->name()) == _materials.end()){
-			material = std::make_shared<Material>();
+			material = std::make_shared<Material>(_cache);
 			auto matPath = fs::path(filename).remove_filename();
 			material->setPath(matPath.string());
 			material->read(root,m->name());

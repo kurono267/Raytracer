@@ -31,6 +31,8 @@ class Scene {
 		std::vector<spModel> _models;
 		std::unordered_map<std::string,spMaterial> _materials;
 		std::string          _filename;
+
+		spImagesCache _cache;
 };
 
 typedef std::shared_ptr<Scene> spScene;

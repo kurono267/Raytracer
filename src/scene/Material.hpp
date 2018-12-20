@@ -2,6 +2,8 @@
 
 #include <mango.hpp>
 
+#include "ImagesCache.hpp"
+
 #include <boost/property_tree/ptree.hpp>
 #include <boost/optional/optional.hpp>
 
@@ -24,7 +26,7 @@ class Material {
 			ParallaxSurface   = 2
 		};
 
-		Material();
+		Material(const spImagesCache& cache);
 		virtual ~Material();
 
 		void setPath(const std::string& path);
@@ -45,6 +47,10 @@ class Material {
 		void setNormalTexture(const std::string& filename);
 		void setHeightmapTexture(const std::string& filename);
 
+		spImage4b getDiffuseTexture();
+		spImage4b getNormalTexture();
+		spImage4b getHeightmapTexture();
+
 		bool equal(const std::shared_ptr<Material>& material);
 
 		//void create(spDevice device,std::unordered_map<std::string,spImage>& imagesBuffer);
@@ -63,12 +69,14 @@ class Material {
 		std::string _heightmapFilename;
 
 		Uniform       _uniform;
-		spTexture     _diffTexture;
-		spTexture     _normalTexture;
-		spTexture     _heightmapTexture;
+		spImage4b     _diffTexture;
+		spImage4b     _normalTexture;
+		spImage4b     _heightmapTexture;
 		spDescSet     _descSet;
 
 		std::string   _path;
+
+		spImagesCache _cache;
 };
 
 typedef std::shared_ptr<Material> spMaterial;

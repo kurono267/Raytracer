@@ -61,7 +61,7 @@ RayHit intersectTriangle(const Ray& ray,const glm::vec3 &v0, const glm::vec3 &v1
     }
     hit.dist = dot(e2, qvec) * inv_det;
     hit.status = true;
-    hit.bc = vec3(u,v,1.0f-u-v);
+    hit.bc = vec3(1.0f-u-v,u,v);
 
     return hit;
 }
