@@ -75,44 +75,103 @@ void PathTracer::computeTile(const glm::ivec2 &start, const mango::scene::spCame
 
     auto scene = _bvh.getScene();
 
-    for(int y = start.y;y<start.y+tileSize;++y){
-        if(y >= PT_HEIGHT)break;
-        for(int x = start.x;x<start.x+tileSize;++x){
-            if(x >= PT_WIDTH)break;
-            float normalized_i = ((float)x / (float)PT_WIDTH) - 0.5f;
-            float normalized_j = ((float)y / (float)PT_HEIGHT) - 0.5f;
-            normalized_j = -normalized_j;
-            normalized_j *= ((float)PT_HEIGHT/(float)PT_WIDTH);
-            glm::vec3 image_point = normalized_i*right +
-                                    normalized_j*up
-                                    + forward;
-            glm::vec3 ray_direction = normalize(image_point);
+    /*
+     if (hit.status) {
+                        sVertex hitVertex = _bvh.postIntersect(r, hit);
 
-            Ray r(pos,ray_direction);
+                        // Shading
+                        auto model = scene->models()[hit.id0];
+                        auto material = model->material();
 
-            RayHit hit = _bvh.intersect(r);
-            if(hit.status){
-                sVertex hitVertex = _bvh.postIntersect(r,hit);
+                        auto diffuseTexture = material->getDiffuseTexture();
+                        auto repeatUV = glm::fract(hitVertex.uv);
+                        glm::vec3 diffColor = diffuseTexture ? (*diffuseTexture)(repeatUV, 3) : glm::vec3(255.0f);
+                        diffColor /= 255.0f;
 
-                // Shading
-                auto model = scene->models()[hit.id0];
-                auto material = model->material();
+                        float light = std::max(0.0f, glm::dot(hitVertex.normal, glm::vec3(0.0, 1.0f, 0.0f)));
 
-                auto diffuseTexture = material->getDiffuseTexture();
-                auto repeatUV = glm::fract(hitVertex.uv);
-                glm::vec3 diffColor = diffuseTexture?(*diffuseTexture)(repeatUV,3):glm::vec3(255.0f);
-                diffColor /= 255.0f;
+                        glm::vec4 outColor(diffColor * material->getDiffuseColor() * light, 1.0f);
 
-                float light = std::max(0.0f,glm::dot(hitVertex.normal,glm::vec3(0.0,1.0f,0.0f)));
+                        //(*_frame)(x,y) = glm::vec4(hitVertex.uv.x,hitVertex.uv.y,1.0f,1.0f);
+                        (*_frame)(x, y) = outColor;
+                        //(*_frame)(x,y) = glm::vec4(glm::vec3(std::max(0.0f,glm::dot(hitVertex.normal,glm::vec3(0.0,1.0f,0.0f)))),1.0f);
+                    } else {
+                        (*_frame)(x, y) = glm::vec4(0.0f);
+                    }
+     */
 
-                glm::vec4 outColor(diffColor*material->getDiffuseColor()*light,1.0f);
+    // Tracing by 2x2 blocks for dFdx dFdy function support
+    bool statusBlock[4];
+    sVertex vertexBlock[4];
+    spModel modelBlock[4];
+    glm::vec2 ptSize(PT_WIDTH,PT_HEIGHT);
+    for(int yBlock = start.y;yBlock<start.y+tileSize;yBlock+=2){
+        if(yBlock >= PT_HEIGHT)break;
+        for(int xBlock = start.x;xBlock<start.x+tileSize;xBlock+=2){
+            if(xBlock >= PT_WIDTH)break;
 
-                //(*_frame)(x,y) = glm::vec4(hitVertex.uv.x,hitVertex.uv.y,1.0f,1.0f);
-                (*_frame)(x,y) = outColor;
-                //(*_frame)(x,y) = glm::vec4(glm::vec3(std::max(0.0f,glm::dot(hitVertex.normal,glm::vec3(0.0,1.0f,0.0f)))),1.0f);
-            } else {
-                (*_frame)(x,y) = glm::vec4(0.0f);
+            // Intersection Block
+            for(int yB = 0;yB<2;++yB) {
+                int y = yBlock+yB;
+                if(y >= PT_HEIGHT)break;
+                for(int xB = 0;xB<2;++xB) {
+                    int x = xBlock+xB;
+                    if(x >= PT_WIDTH)break;
+                    float normalized_i = ((float) x / (float) PT_WIDTH) - 0.5f;
+                    float normalized_j = ((float) y / (float) PT_HEIGHT) - 0.5f;
+                    normalized_j = -normalized_j;
+                    normalized_j *= ((float) PT_HEIGHT / (float) PT_WIDTH);
+                    glm::vec3 image_point = normalized_i * right +
+                                            normalized_j * up
+                                            + forward;
+                    glm::vec3 ray_direction = normalize(image_point);
+
+                    Ray r(pos, ray_direction);
+                    auto hit = _bvh.intersect(r);
+                    auto inBlockID = yB*2+xB;
+                    statusBlock[inBlockID] = hit.status;
+                    if(hit.status){
+                        vertexBlock[inBlockID] = _bvh.postIntersect(r, hit);
+                        modelBlock[inBlockID] = scene->models()[hit.id0];
+                    }
+                }
             }
+
+            for(int yB = 0;yB<2;++yB) {
+                int y = yBlock+yB;
+                if(y >= PT_HEIGHT)break;
+                for(int xB = 0;xB<2;++xB) {
+                    int x = xBlock + xB;
+                    if (x >= PT_WIDTH)break;
+
+                    glm::vec2 dUVx = vertexBlock[yB*2+1].uv-vertexBlock[yB*2+0].uv;
+                    dUVx *= ptSize;
+                    glm::vec2 dUVy = vertexBlock[1*2+xB].uv-vertexBlock[xB].uv;
+                    dUVy *= ptSize;
+
+                    if(statusBlock[yB*2+xB]){
+                        // Shading
+                        auto model = modelBlock[yB*2+xB];
+                        auto vertex = vertexBlock[yB*2+xB];
+                        auto material = model->material();
+
+                        auto diffuseTexture = material->getDiffuseTexture();
+                        auto repeatUV = glm::fract(vertex.uv);
+                        glm::vec3 diffColor = diffuseTexture ? filterTrilinear(*diffuseTexture,repeatUV,dUVx,dUVy) : glm::vec3(255.0f);
+                        diffColor /= 255.0f;
+
+                        float light = std::max(0.0f, glm::dot(vertex.normal, glm::vec3(0.0, 1.0f, 0.0f)));
+
+                        glm::vec4 outColor(diffColor * material->getDiffuseColor() * light, 1.0f);
+
+                        //(*_frame)(x,y) = glm::vec4(hitVertex.uv.x,hitVertex.uv.y,1.0f,1.0f);
+                        (*_frame)(x, y) = outColor;
+                    } else {
+                        (*_frame)(x, y) = glm::vec4(0.0f);
+                    }
+                }
+            }
+
         }
     }
 }
