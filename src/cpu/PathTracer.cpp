@@ -14,7 +14,7 @@ void PathTracer::init() {
     _bvh.runLBVH(_scene);
 
     _texture = _device->createTexture(PT_WIDTH,PT_HEIGHT,1,Format::R32G32B32A32Sfloat,TextureType::Input);
-    _frame = std::make_shared<Image4f>(glm::ivec2(PT_WIDTH,PT_HEIGHT),glm::vec4(0.0f));
+    _frame = std::make_shared<Image4f>(glm::ivec2(PT_WIDTH,PT_HEIGHT),1,glm::vec4(0.0f));
     _textureCPU = _device->createBuffer(BufferType::CPU,MemoryType::HOST,PT_WIDTH*PT_HEIGHT*sizeof(glm::vec4),(void*)_frame->data().data());
 }
 
@@ -100,7 +100,7 @@ void PathTracer::computeTile(const glm::ivec2 &start, const mango::scene::spCame
 
                 auto diffuseTexture = material->getDiffuseTexture();
                 auto repeatUV = glm::fract(hitVertex.uv);
-                glm::vec3 diffColor = diffuseTexture?(*diffuseTexture)(repeatUV):glm::vec3(255.0f);
+                glm::vec3 diffColor = diffuseTexture?(*diffuseTexture)(repeatUV,3):glm::vec3(255.0f);
                 diffColor /= 255.0f;
 
                 float light = std::max(0.0f,glm::dot(hitVertex.normal,glm::vec3(0.0,1.0f,0.0f)));
