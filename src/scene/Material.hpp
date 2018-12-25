@@ -3,6 +3,8 @@
 #include <mango.hpp>
 
 #include "ImagesCache.hpp"
+#include "../cpu/bsdf/BSDF.hpp"
+#include "../cpu/bsdf/Diffuse.hpp"
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/optional/optional.hpp>
@@ -58,6 +60,8 @@ class Material {
 		MaterialUBO data();
 
 		spDescSet   getDescSet();
+
+		spBSDF computeBSDF(const sVertex& vertex, const glm::vec2& dUVx, const glm::vec2& dUVy);
 	protected:
 		void read(const ptree& tree);           // Read material from ptree
 		void save(ptree& tree);

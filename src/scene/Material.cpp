@@ -188,3 +188,16 @@ spImage4b Material::getHeightmapTexture() {
 	return _heightmapTexture;
 }
 
+spBSDF Material::computeBSDF(const sVertex &vertex, const glm::vec2 &dUVx, const glm::vec2 &dUVy) {
+	// Get diffuse color from texture
+	auto repeatUV = glm::fract(vertex.uv);
+	glm::vec3 diffColor = _diffTexture ? filterTrilinear(*_diffTexture,repeatUV,dUVx,dUVy) : glm::vec3(255.0f);
+	diffColor /= 255.0f;
+	diffColor *= glm::vec3(_data.diffuseColor);
+
+	spBSDF bsdf = std::make_shared<BSDF>(vertex,1.f);
+	bsdf->add(std::make_shared<Diffuse>(diffColor,getRoughness()));
+
+	return bsdf;
+}
+

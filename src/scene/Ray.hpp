@@ -7,6 +7,7 @@
 #include "BBox.hpp"
 
 struct Ray {
+    Ray() = default;
     Ray(const glm::vec3& _org, const glm::vec3& _dir) : org(_org),dir(_dir){
         invdir = 1.0f/dir;
         for(int i = 0;i<3;++i){

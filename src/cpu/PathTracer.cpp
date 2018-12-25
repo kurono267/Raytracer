@@ -4,6 +4,9 @@
 
 #include <thread>
 #include "PathTracer.hpp"
+#include "bsdf/Diffuse.hpp"
+#include "bsdf/BSDF.hpp"
+#include <random>
 
 PathTracer::PathTracer(const spDevice& device,const spScene &scene) : _scene(scene), _device(device) {
 
@@ -75,6 +78,10 @@ void PathTracer::computeTile(const glm::ivec2 &start, const mango::scene::spCame
 
     auto scene = _bvh.getScene();
 
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution<> dis(0.f, 1.f);
+
     /*
      if (hit.status) {
                         sVertex hitVertex = _bvh.postIntersect(r, hit);
@@ -104,7 +111,12 @@ void PathTracer::computeTile(const glm::ivec2 &start, const mango::scene::spCame
     bool statusBlock[4];
     sVertex vertexBlock[4];
     spModel modelBlock[4];
+    Ray     raysBlock[4];
     glm::vec2 ptSize(PT_WIDTH,PT_HEIGHT);
+
+    glm::vec3 lightPos(0.0f,10.0f,0.0f);
+    //glm::vec3 lightDir(0.0f,1.0f,0.0f);
+
     for(int yBlock = start.y;yBlock<start.y+tileSize;yBlock+=2){
         if(yBlock >= PT_HEIGHT)break;
         for(int xBlock = start.x;xBlock<start.x+tileSize;xBlock+=2){
@@ -133,6 +145,7 @@ void PathTracer::computeTile(const glm::ivec2 &start, const mango::scene::spCame
                     if(hit.status){
                         vertexBlock[inBlockID] = _bvh.postIntersect(r, hit);
                         modelBlock[inBlockID] = scene->models()[hit.id0];
+                        raysBlock[inBlockID] = r;
                     }
                 }
             }
@@ -144,28 +157,31 @@ void PathTracer::computeTile(const glm::ivec2 &start, const mango::scene::spCame
                     int x = xBlock + xB;
                     if (x >= PT_WIDTH)break;
 
-                    glm::vec2 dUVx = vertexBlock[yB*2+1].uv-vertexBlock[yB*2+0].uv;
-                    dUVx *= ptSize;
-                    glm::vec2 dUVy = vertexBlock[1*2+xB].uv-vertexBlock[xB].uv;
-                    dUVy *= ptSize;
-
                     if(statusBlock[yB*2+xB]){
+						auto vertex = vertexBlock[yB*2+xB];
+
+						auto dUVx = vertexBlock[yB*2+1].uv-vertexBlock[yB*2+0].uv;
+						auto dUVy = vertexBlock[1*2+xB].uv-vertexBlock[xB].uv;
+
+						glm::vec3 out = -raysBlock[yB*2+xB].dir;
+						auto in = normalize(lightPos-vertex.pos);
+
+						dUVx *= ptSize;
+						dUVy *= ptSize;
+
                         // Shading
                         auto model = modelBlock[yB*2+xB];
-                        auto vertex = vertexBlock[yB*2+xB];
                         auto material = model->material();
-
-                        auto diffuseTexture = material->getDiffuseTexture();
-                        auto repeatUV = glm::fract(vertex.uv);
-                        glm::vec3 diffColor = diffuseTexture ? filterTrilinear(*diffuseTexture,repeatUV,dUVx,dUVy) : glm::vec3(255.0f);
-                        diffColor /= 255.0f;
-
-                        float light = std::max(0.0f, glm::dot(vertex.normal, glm::vec3(0.0, 1.0f, 0.0f)));
-
-                        glm::vec4 outColor(diffColor * material->getDiffuseColor() * light, 1.0f);
+                        auto bsdf = material->computeBSDF(vertex,dUVx,dUVy);
 
                         //(*_frame)(x,y) = glm::vec4(hitVertex.uv.x,hitVertex.uv.y,1.0f,1.0f);
-                        (*_frame)(x, y) = outColor;
+
+                        //glm::vec3 in; float pdf; BxDF::Type type;
+                        //auto bxdfColor = diffuseTest.sampled(outLocal,glm::vec2(dis(gen),dis(gen)),in,pdf,type);
+                        auto bxdfColor = bsdf->f(out,in);
+                        float pdf = bsdf->pdf(out,in);
+
+                        (*_frame)(x, y) = glm::vec4(bxdfColor*pdf*10.0f,1.0f);
                     } else {
                         (*_frame)(x, y) = glm::vec4(0.0f);
                     }

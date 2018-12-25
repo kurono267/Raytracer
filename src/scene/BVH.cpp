@@ -184,7 +184,12 @@ sVertex BVH::postIntersect(const Ray &ray,const RayHit &hit) {
         const auto& vert = _vertices[id];
         hitVertex.normal += vert.normal*hit.bc[v];
         hitVertex.uv     += vert.uv*hit.bc[v];
+        hitVertex.tangent += vert.tangent*hit.bc[v];
+        hitVertex.binormal += vert.binormal*hit.bc[v];
     }
+    hitVertex.normal = normalize(hitVertex.normal);
+    hitVertex.binormal = normalize(hitVertex.binormal);
+    hitVertex.tangent = normalize(hitVertex.tangent);
     return hitVertex;
 }
 

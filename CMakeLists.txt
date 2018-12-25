@@ -20,7 +20,7 @@ set(SCENE_SRC
         src/scene/Model.cpp
         src/scene/Scene.cpp
         src/scene/MeshCPU.cpp
-        src/cpu/PathTracer.cpp src/cpu/PathTracer.hpp src/scene/Ray.hpp src/scene/BBox.hpp src/scene/BBox.cpp src/scene/Ray.cpp src/scene/ImagesCache.cpp src/scene/ImagesCache.hpp)
+        src/cpu/PathTracer.cpp src/cpu/PathTracer.hpp src/scene/Ray.hpp src/scene/BBox.hpp src/scene/BBox.cpp src/scene/Ray.cpp src/scene/ImagesCache.cpp src/scene/ImagesCache.hpp src/cpu/bsdf/BxDF.hpp src/cpu/bsdf/Diffuse.cpp src/cpu/bsdf/Diffuse.hpp src/cpu/bsdf/BxDF.cpp src/cpu/bsdf/Samples.hpp src/cpu/bsdf/BSDF.cpp src/cpu/bsdf/BSDF.hpp)
 
 add_executable(Raytracer src/app/main.cpp src/app/App.cpp ${SCENE_SRC})
 target_link_libraries(Raytracer mango boost_filesystem boost_system)
