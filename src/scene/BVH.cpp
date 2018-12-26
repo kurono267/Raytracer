@@ -32,88 +32,19 @@ size_t BVH::rootID(){
 	return rootId;
 }
 
-const int MAX_STACK = 64;
+const int MAX_STACK = 128;
 struct Stack {
     int nodes[MAX_STACK];
     int top;
-} stack;
 
-void add_stack(int id){
-    if(stack.top < MAX_STACK-1){
-        stack.nodes[++stack.top] = id;
+    void add(int id){
+        if(top < MAX_STACK-1){
+            nodes[++top] = id;
+        }
     }
-}
+};
 
 using namespace glm;
-
-RayHit BVH::intersectWithStack(const Ray &ray) {
-    // Check root, if not return
-    RayHit hit = intersectBBox(ray,_nodes[rootId].box);
-    if(!hit.status)return hit;
-
-    hit.status = false;
-    hit.dist   = std::numeric_limits<float>::infinity();
-
-    stack.nodes[0] = rootId;
-    stack.top = 0;
-
-    RayHit test;BVHNode curr;
-    int currId;
-    // Max steps for debug
-    uint step = 0;
-    while(stack.top >= 0){
-        step++;
-        // Get Top element from stack
-        currId = stack.nodes[stack.top--];
-        curr  = _nodes[currId];
-
-        if(curr.isLeaf){ // Leaf
-            // Check triangles
-            test = intersectBBox(ray,curr.box);
-            if(test.dist < hit.dist && test.dist > 0.0f){
-                auto triIds = curr.triIds;
-                for(int i = 0;i<4;++i){
-                    int triId = triIds[i];
-                    if(triId >= 0){
-                        auto id0 = _indices[triId]; auto id1 = _indices[triId+1]; auto id2 = _indices[triId+2];
-                        auto vp0 = _vertices[id0]; auto vp1 = _vertices[id1]; auto vp2 = _vertices[id2];
-                        test = intersectTriangle(ray,vp0.pos,vp1.pos,vp2.pos);
-                        if(test.dist < hit.dist && test.dist > 0.0f){
-                            hit = test;
-                            hit.id1 = triId;
-                            hit.id0 = curr.modelIds[i];
-                            //break;
-                        }
-                    }
-                }
-            }
-        } else {
-            // Check left and right child
-            int leftID  = curr.data.left;
-            int rightID = curr.data.right;
-
-            RayHit left = intersectBBox(ray,_nodes[leftID].box);
-            RayHit right = intersectBBox(ray,_nodes[rightID].box);
-
-            bool leftStatus  = left.dist < hit.dist && left.dist > 0.0f;
-            bool rightStatus = right.dist < hit.dist && right.dist > 0.0f;
-
-            if(leftStatus && rightStatus){
-                // Left child always neares, if not swap
-                if(right.dist < left.dist){
-                    int tmp = leftID;
-                    leftID  = rightID;
-                    rightID = tmp;
-                }
-                add_stack(rightID);
-                add_stack(leftID); // Left ID at top
-            } else if(leftStatus)add_stack(leftID);
-            else if(rightStatus)add_stack(rightID);
-        }
-
-    }
-    return hit;
-}
 
 RayHit BVH::intersect(const Ray &ray) {
     // Check root, if not return
@@ -129,11 +60,29 @@ RayHit BVH::intersect(const Ray &ray) {
     return hit;
 }
 
-void BVH::intersect(const Ray &ray, RayHit& hit, BVHNode &curr) {
-    if(curr.isLeaf){ // Leaf
-        // Check triangles
-        auto test = intersectBBox(ray,curr.box);
-        if(test.dist < hit.dist && test.dist > 0.0f){
+RayHit BVH::occluded(const Ray &ray) {
+// Check root, if not return
+    RayHit hit = intersectBBox(ray,_nodes[rootId].box);
+    if(!hit.status)return hit;
+
+    hit.status = false;
+    hit.dist   = std::numeric_limits<float>::infinity();
+
+    Stack stack;
+    stack.nodes[0] = rootId;
+    stack.top = 0;
+
+    RayHit test;BVHNode curr;
+    int currId;
+    // Max steps for debug
+    uint step = 0;
+    while(stack.top >= 0){
+        step++;
+        // Get Top element from stack
+        currId = stack.nodes[stack.top--];
+        curr  = _nodes[currId];
+
+        if(curr.isLeaf){ // Leaf
             auto triIds = curr.triIds;
             for(int i = 0;i<4;++i){
                 int triId = triIds[i];
@@ -141,12 +90,56 @@ void BVH::intersect(const Ray &ray, RayHit& hit, BVHNode &curr) {
                     auto id0 = _indices[triId]; auto id1 = _indices[triId+1]; auto id2 = _indices[triId+2];
                     auto vp0 = _vertices[id0]; auto vp1 = _vertices[id1]; auto vp2 = _vertices[id2];
                     test = intersectTriangle(ray,vp0.pos,vp1.pos,vp2.pos);
-                    if(test.dist < hit.dist && test.dist > 0.0f){
+                    if(test.status){
                         hit = test;
                         hit.id1 = triId;
                         hit.id0 = curr.modelIds[i];
-                        //break;
+                        return hit;
                     }
+                }
+            }
+        } else {
+            // Check left and right child
+            int leftID  = curr.data.left;
+            int rightID = curr.data.right;
+
+            RayHit left = intersectBBox(ray,_nodes[leftID].box);
+            RayHit right = intersectBBox(ray,_nodes[rightID].box);
+
+            bool leftStatus  = left.status && left.dist < hit.dist;
+            bool rightStatus = right.status && right.dist < hit.dist;
+
+            if(leftStatus && rightStatus){
+                // Left child always neares, if not swap
+                if(right.dist < left.dist){
+                    int tmp = leftID;
+                    leftID  = rightID;
+                    rightID = tmp;
+                }
+                stack.add(rightID);
+                stack.add(leftID); // Left ID at top
+            } else if(leftStatus)stack.add(leftID);
+            else if(rightStatus)stack.add(rightID);
+        }
+
+    }
+    return hit;
+}
+
+void BVH::intersect(const Ray &ray, RayHit& hit, BVHNode &curr) {
+    if(curr.isLeaf){ // Leaf
+        // Check triangles
+        auto triIds = curr.triIds;
+        for(int i = 0;i<4;++i){
+            int triId = triIds[i];
+            if(triId >= 0){
+                auto id0 = _indices[triId]; auto id1 = _indices[triId+1]; auto id2 = _indices[triId+2];
+                auto vp0 = _vertices[id0]; auto vp1 = _vertices[id1]; auto vp2 = _vertices[id2];
+                auto test = intersectTriangle(ray,vp0.pos,vp1.pos,vp2.pos);
+                if(test.status && test.dist < hit.dist){
+                    hit = test;
+                    hit.id1 = triId;
+                    hit.id0 = curr.modelIds[i];
                 }
             }
         }
@@ -161,8 +154,8 @@ void BVH::intersect(const Ray &ray, RayHit& hit, BVHNode &curr) {
         RayHit left = intersectBBox(ray,_nodes[leftID].box);
         RayHit right = intersectBBox(ray,_nodes[rightID].box);
 
-        bool leftStatus  = left.dist < hit.dist && left.dist > 0.0f;
-        bool rightStatus = right.dist < hit.dist && right.dist > 0.0f;
+        bool leftStatus  = left.status && left.dist < hit.dist;
+        bool rightStatus = right.status && right.dist < hit.dist;
 
         if(leftStatus && rightStatus){
             // Left child always nearest, if not swap

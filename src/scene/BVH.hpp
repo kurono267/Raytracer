@@ -36,8 +36,9 @@ class BVH {
 		void runLBVH(const spScene& scene);
 
 		RayHit intersect(const Ray& ray);
-        RayHit intersectWithStack(const Ray &ray);
 		sVertex postIntersect(const Ray &ray,const RayHit& hit);
+
+		RayHit occluded(const Ray &ray);
 
 		spScene getScene();
 

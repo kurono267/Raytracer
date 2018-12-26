@@ -15,8 +15,13 @@ struct BBox {
 
     uint32_t maxDim();
 
-    glm::vec3 min;
-    glm::vec3 max;
+    union {
+        glm::vec3 bounds[2];
+        struct {
+            glm::vec3 min;
+            glm::vec3 max;
+        };
+    };
 };
 
 struct BVHNode {

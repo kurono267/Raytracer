@@ -95,6 +95,8 @@ void PathTracer::computeTile(const glm::ivec2 &start, const mango::scene::spCame
     Ray     raysBlock[4];
     glm::vec2 ptSize(PT_WIDTH,PT_HEIGHT);
 
+    glm::vec3 dir(0.0f,1.0f,0.0f);
+
     for(int yBlock = start.y;yBlock<start.y+tileSize;yBlock+=2){
         if(yBlock >= PT_HEIGHT)break;
         for(int xBlock = start.x;xBlock<start.x+tileSize;xBlock+=2){
@@ -153,8 +155,8 @@ void PathTracer::computeTile(const glm::ivec2 &start, const mango::scene::spCame
 						for(auto light : _scene->lights()) {
 							glm::vec3 in; float lightPdf;
 							auto li = light->sampleLi(vertex, glm::vec2(dis(gen),dis(gen)), in, lightPdf);
-							//auto shadowHit = _bvh.intersect(Ray(vertex.pos+vertex.normal*0.0001f,in));
-							//if(shadowHit.status)continue;
+							auto shadowHit = _bvh.occluded(Ray(vertex.pos+in*0.1f,in));
+							if(shadowHit.status)continue;
 							auto bsdfColor = bsdf->f(out,in);
 							float bsdfPdf = bsdf->pdf(out,in);
 

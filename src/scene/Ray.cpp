@@ -15,6 +15,7 @@ RayHit::RayHit(){
 }
 
 RayHit intersectBBox(const Ray& ray,const BBox &box) {
+
     RayHit hit;
 
     vec3 lov = ray.invdir*(box.min - ray.org);

@@ -31,7 +31,7 @@ bool App::init() {
 
     // Load environment map
     spImage4f env = loadImageHDRI("envs/spruit_sunrise_2k.hdr");
-    _scene->add(std::make_shared<EnvLight>(env,glm::vec3(0.1f)));
+    //_scene->add(std::make_shared<EnvLight>(env,glm::vec3(0.1f)));
 
     _pt = std::make_shared<PathTracer>(device,_scene);
     _pt->init();
