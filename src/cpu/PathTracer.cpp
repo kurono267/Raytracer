@@ -153,6 +153,8 @@ void PathTracer::computeTile(const glm::ivec2 &start, const mango::scene::spCame
 						for(auto light : _scene->lights()) {
 							glm::vec3 in; float lightPdf;
 							auto li = light->sampleLi(vertex, glm::vec2(dis(gen),dis(gen)), in, lightPdf);
+							//auto shadowHit = _bvh.intersect(Ray(vertex.pos+vertex.normal*0.0001f,in));
+							//if(shadowHit.status)continue;
 							auto bsdfColor = bsdf->f(out,in);
 							float bsdfPdf = bsdf->pdf(out,in);
 

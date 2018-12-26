@@ -26,7 +26,9 @@ EnvLight::EnvLight(const spImage4f& image, const glm::vec3& light) : LightSource
 glm::vec3 EnvLight::sampleLi(const mango::sVertex &vertex, const glm::vec2 &sample, glm::vec3 &inWorld, float &pdf) {
 	float mapPdf;
 	glm::vec2 uv = _dist->sampleContinuous(sample, mapPdf);
+	pdf = 0.0f;
 	if (mapPdf == 0) return glm::vec3(0.f);
+	//auto uv = sample; float mapPdf = 1.f;
 
 	float theta = uv.x * (float)M_PI, phi = uv.y * 2.f * (float)M_PI;
 	float cosTheta = std::cos(theta), sinTheta = std::sin(theta);
@@ -45,5 +47,5 @@ float EnvLight::pdfLi(const mango::sVertex &vertex, const glm::vec3 &inWorld) {
 const float worldRadius = 100.0f;
 
 glm::vec3 EnvLight::power() {
-	return glm::vec3(1.0f);//(float)M_PI * worldRadius * worldRadius * (*_image)(glm::vec2(0.5f),_image->mipLevels()-1);
+	return (float)M_PI * worldRadius * worldRadius * (*_image)(glm::vec2(0.5f),_image->mipLevels()-1);
 }

@@ -45,12 +45,16 @@ float Distribution1D::discretePDF(int index) const { return func[index] / (funcI
 
 Distribution2D::Distribution2D(const std::vector<float>& data, int width, int height){
 	for (int v = 0; v < height; ++v) {
-		pConditionalV.emplace_back(new Distribution1D(std::vector<float>(data.begin()+v*width,data.begin()+(v+1)*width)));
+		std::vector<float> line(width);
+		for(int x = 0;x<width;++x){
+			line[x] = data[v*width+x];
+		}
+		pConditionalV.emplace_back(new Distribution1D(line));
 	}
 	std::vector<float> marginalFunc;
 	for (int v = 0; v < height; ++v)
 		marginalFunc.push_back(pConditionalV[v]->funcInt);
-	pMarginal.reset(new Distribution1D(std::vector<float>(marginalFunc.begin(),marginalFunc.begin()+height)));
+	pMarginal.reset(new Distribution1D(marginalFunc));
 }
 
 glm::vec2 Distribution2D::sampleContinuous(const glm::vec2 &u, float& pdf) const {
