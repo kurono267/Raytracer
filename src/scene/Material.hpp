@@ -3,8 +3,8 @@
 #include <mango.hpp>
 
 #include "ImagesCache.hpp"
-#include "../cpu/bsdf/BSDF.hpp"
-#include "../cpu/bsdf/Diffuse.hpp"
+#include "bsdf/BSDF.hpp"
+#include "bsdf/Diffuse.hpp"
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/optional/optional.hpp>

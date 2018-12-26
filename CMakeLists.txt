@@ -9,7 +9,7 @@ include_directories(external/Mango/src)
 link_directories($ENV{VULKAN_SDK}/lib/)
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/bin)
-include_directories(${GLFW_INCLUDE_DIRS} ${GLM_INCLUDE_DIRS} ${Vulkan_INCLUDE_DIR})
+include_directories(${GLFW_INCLUDE_DIRS} ${GLM_INCLUDE_DIRS} ${Vulkan_INCLUDE_DIR} src)
 
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O2")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -mavx")
@@ -20,7 +20,7 @@ set(SCENE_SRC
         src/scene/Model.cpp
         src/scene/Scene.cpp
         src/scene/MeshCPU.cpp
-        src/cpu/PathTracer.cpp src/cpu/PathTracer.hpp src/scene/Ray.hpp src/scene/BBox.hpp src/scene/BBox.cpp src/scene/Ray.cpp src/scene/ImagesCache.cpp src/scene/ImagesCache.hpp src/cpu/bsdf/BxDF.hpp src/cpu/bsdf/Diffuse.cpp src/cpu/bsdf/Diffuse.hpp src/cpu/bsdf/BxDF.cpp src/cpu/bsdf/Samples.hpp src/cpu/bsdf/BSDF.cpp src/cpu/bsdf/BSDF.hpp)
+        src/cpu/PathTracer.cpp src/cpu/PathTracer.hpp src/scene/Ray.hpp src/scene/BBox.hpp src/scene/BBox.cpp src/scene/Ray.cpp src/scene/ImagesCache.cpp src/scene/ImagesCache.hpp src/scene/bsdf/BxDF.hpp src/scene/bsdf/Diffuse.cpp src/scene/bsdf/Diffuse.hpp src/scene/bsdf/BxDF.cpp src/scene/bsdf/Samples.hpp src/scene/bsdf/BSDF.cpp src/scene/bsdf/BSDF.hpp src/scene/lights/LightSource.hpp src/scene/lights/PointLight.cpp src/scene/lights/PointLight.hpp)
 
 add_executable(Raytracer src/app/main.cpp src/app/App.cpp ${SCENE_SRC})
 target_link_libraries(Raytracer mango boost_filesystem boost_system)

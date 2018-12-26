@@ -3,6 +3,7 @@
 //
 
 #include "App.hpp"
+#include "scene/lights/PointLight.hpp"
 
 bool App::init() {
     auto mainWnd = mainApp.lock();
@@ -25,6 +26,7 @@ bool App::init() {
     for(auto model : _scene->models()){
         _sceneGPU.push_back(createMesh(device,model->mesh()));
     }
+    _scene->add(std::make_shared<PointLight>(glm::translate(glm::vec3(0.f,10.0f,0.0f)),glm::vec3(10.0f)));
 
     _pt = std::make_shared<PathTracer>(device,_scene);
     _pt->init();

@@ -143,3 +143,11 @@ bool Scene::equal(const std::shared_ptr<Scene>& scene){
 	}
 	return true;
 }
+
+void Scene::add(const spLightSource &light) {
+	_lights.push_back(light);
+}
+
+std::vector<spLightSource> &Scene::lights() {
+	return _lights;
+}

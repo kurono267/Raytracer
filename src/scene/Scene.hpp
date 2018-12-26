@@ -4,6 +4,7 @@
 
 #include "Model.hpp"
 #include <boost/property_tree/json_parser.hpp>
+#include "lights/LightSource.hpp"
 
 class Scene {
 	const std::string binExt = "r267b";
@@ -13,6 +14,7 @@ class Scene {
 		virtual ~Scene();
 
 		void add(const spModel& model);
+		void add(const spLightSource& light);
 		
 		// Filename without resolution
 		// Save and load 2 files 
@@ -25,10 +27,12 @@ class Scene {
 
 		std::vector<spModel>& models();
 		std::unordered_map<std::string,spMaterial>& materials();
+		std::vector<spLightSource>& lights();
 
 		bool equal(const std::shared_ptr<Scene>& scene);
 	protected:
 		std::vector<spModel> _models;
+		std::vector<spLightSource> _lights;
 		std::unordered_map<std::string,spMaterial> _materials;
 		std::string          _filename;
 

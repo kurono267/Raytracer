@@ -4,8 +4,8 @@
 
 #include <thread>
 #include "PathTracer.hpp"
-#include "bsdf/Diffuse.hpp"
-#include "bsdf/BSDF.hpp"
+#include "scene/bsdf/Diffuse.hpp"
+#include "scene/bsdf/BSDF.hpp"
 #include <random>
 
 PathTracer::PathTracer(const spDevice& device,const spScene &scene) : _scene(scene), _device(device) {
@@ -114,9 +114,6 @@ void PathTracer::computeTile(const glm::ivec2 &start, const mango::scene::spCame
     Ray     raysBlock[4];
     glm::vec2 ptSize(PT_WIDTH,PT_HEIGHT);
 
-    glm::vec3 lightPos(0.0f,10.0f,0.0f);
-    //glm::vec3 lightDir(0.0f,1.0f,0.0f);
-
     for(int yBlock = start.y;yBlock<start.y+tileSize;yBlock+=2){
         if(yBlock >= PT_HEIGHT)break;
         for(int xBlock = start.x;xBlock<start.x+tileSize;xBlock+=2){
@@ -162,26 +159,26 @@ void PathTracer::computeTile(const glm::ivec2 &start, const mango::scene::spCame
 
 						auto dUVx = vertexBlock[yB*2+1].uv-vertexBlock[yB*2+0].uv;
 						auto dUVy = vertexBlock[1*2+xB].uv-vertexBlock[xB].uv;
-
-						glm::vec3 out = -raysBlock[yB*2+xB].dir;
-						auto in = normalize(lightPos-vertex.pos);
-
 						dUVx *= ptSize;
 						dUVy *= ptSize;
 
-                        // Shading
-                        auto model = modelBlock[yB*2+xB];
-                        auto material = model->material();
-                        auto bsdf = material->computeBSDF(vertex,dUVx,dUVy);
+						// Shading
+						auto model = modelBlock[yB*2+xB];
+						auto material = model->material();
+						auto bsdf = material->computeBSDF(vertex,dUVx,dUVy);
 
-                        //(*_frame)(x,y) = glm::vec4(hitVertex.uv.x,hitVertex.uv.y,1.0f,1.0f);
+						glm::vec3 out = -raysBlock[yB*2+xB].dir;
+						glm::vec3 lightColor(0.0f);
+						for(auto light : _scene->lights()) {
+							glm::vec3 in; float lightPdf;
+							auto li = light->sampleLi(vertex, glm::vec2(0.0f), in, lightPdf);
+							auto bsdfColor = bsdf->f(out,in);
+							float bsdfPdf = bsdf->pdf(out,in);
 
-                        //glm::vec3 in; float pdf; BxDF::Type type;
-                        //auto bxdfColor = diffuseTest.sampled(outLocal,glm::vec2(dis(gen),dis(gen)),in,pdf,type);
-                        auto bxdfColor = bsdf->f(out,in);
-                        float pdf = bsdf->pdf(out,in);
+							lightColor += bsdfColor*bsdfPdf*li*lightPdf*light->power();
+						}
 
-                        (*_frame)(x, y) = glm::vec4(bxdfColor*pdf*10.0f,1.0f);
+                        (*_frame)(x, y) = glm::vec4(lightColor,1.0f);
                     } else {
                         (*_frame)(x, y) = glm::vec4(0.0f);
                     }
