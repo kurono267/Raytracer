@@ -7,6 +7,7 @@
 #include <mango.hpp>
 
 #include "Samples.hpp"
+#include "scene/Common.hpp"
 
 class BxDF {
     public:
@@ -43,10 +44,6 @@ inline float sinTheta(const glm::vec3& w) { return std::sqrt(sin2Theta(w)); }
 
 inline float tanTheta(const glm::vec3& w) { return sinTheta(w) / cosTheta(w); }
 inline float tan2Theta(const glm::vec3& w) { return sin2Theta(w) / cos2Theta(w); }
-
-inline float clamp(float v, float _min, float _max) {
-	return std::max(std::min(v,_max),_min);
-}
 
 inline float cosPhi(const glm::vec3 &w) {
     float sTheta = sinTheta(w);

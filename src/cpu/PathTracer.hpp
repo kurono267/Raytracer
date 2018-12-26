@@ -32,6 +32,8 @@ private:
     spImage4f _frame;
     spTexture _texture;
     spBuffer  _textureCPU;
+
+    float _frames;
 };
 
 typedef std::shared_ptr<PathTracer> spPathTracer;

@@ -34,6 +34,10 @@ const uint32_t tileSize = 16;
 const uint32_t threadsMax = 16;
 
 void PathTracer::update(const mango::scene::spCamera& camera){
+	if(camera->isUpdated()){
+		_frames = 0.0f;
+		camera->updateFinish();
+	}
     auto start = std::chrono::system_clock::now();
 
     glm::ivec2 tilesRes(std::ceil((float)PT_WIDTH/(float)tileSize),std::ceil((float)PT_HEIGHT/(float)tileSize));
@@ -68,6 +72,8 @@ void PathTracer::update(const mango::scene::spCamera& camera){
     float frameTime = std::chrono::duration_cast<std::chrono::duration<float> >(end-start).count();
     std::cout << "PT Time:" << frameTime*1000.0f << " ms" << std::endl;
     std::cout << "FPS: " << 1.0f/frameTime << std::endl;
+
+    if(!camera->isUpdated())_frames++;
 }
 
 void PathTracer::computeTile(const glm::ivec2 &start, const mango::scene::spCamera &camera) {
@@ -81,31 +87,6 @@ void PathTracer::computeTile(const glm::ivec2 &start, const mango::scene::spCame
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_real_distribution<> dis(0.f, 1.f);
-
-    /*
-     if (hit.status) {
-                        sVertex hitVertex = _bvh.postIntersect(r, hit);
-
-                        // Shading
-                        auto model = scene->models()[hit.id0];
-                        auto material = model->material();
-
-                        auto diffuseTexture = material->getDiffuseTexture();
-                        auto repeatUV = glm::fract(hitVertex.uv);
-                        glm::vec3 diffColor = diffuseTexture ? (*diffuseTexture)(repeatUV, 3) : glm::vec3(255.0f);
-                        diffColor /= 255.0f;
-
-                        float light = std::max(0.0f, glm::dot(hitVertex.normal, glm::vec3(0.0, 1.0f, 0.0f)));
-
-                        glm::vec4 outColor(diffColor * material->getDiffuseColor() * light, 1.0f);
-
-                        //(*_frame)(x,y) = glm::vec4(hitVertex.uv.x,hitVertex.uv.y,1.0f,1.0f);
-                        (*_frame)(x, y) = outColor;
-                        //(*_frame)(x,y) = glm::vec4(glm::vec3(std::max(0.0f,glm::dot(hitVertex.normal,glm::vec3(0.0,1.0f,0.0f)))),1.0f);
-                    } else {
-                        (*_frame)(x, y) = glm::vec4(0.0f);
-                    }
-     */
 
     // Tracing by 2x2 blocks for dFdx dFdy function support
     bool statusBlock[4];
@@ -171,14 +152,23 @@ void PathTracer::computeTile(const glm::ivec2 &start, const mango::scene::spCame
 						glm::vec3 lightColor(0.0f);
 						for(auto light : _scene->lights()) {
 							glm::vec3 in; float lightPdf;
-							auto li = light->sampleLi(vertex, glm::vec2(0.0f), in, lightPdf);
+							auto li = light->sampleLi(vertex, glm::vec2(dis(gen),dis(gen)), in, lightPdf);
 							auto bsdfColor = bsdf->f(out,in);
 							float bsdfPdf = bsdf->pdf(out,in);
 
 							lightColor += bsdfColor*bsdfPdf*li*lightPdf*light->power();
 						}
 
-                        (*_frame)(x, y) = glm::vec4(lightColor,1.0f);
+						if(_frames != 0.0f) {
+							glm::vec3 prevFrame = (*_frame)(x, y);
+							prevFrame *= (float)_frames;
+							prevFrame += lightColor;
+							prevFrame /= (float)_frames+1.f;
+
+							(*_frame)(x, y) = glm::vec4(prevFrame, 1.0f);
+						} else {
+							(*_frame)(x, y) = glm::vec4(lightColor, 1.0f);
+						}
                     } else {
                         (*_frame)(x, y) = glm::vec4(0.0f);
                     }

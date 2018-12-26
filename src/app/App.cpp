@@ -4,6 +4,7 @@
 
 #include "App.hpp"
 #include "scene/lights/PointLight.hpp"
+#include "scene/lights/EnvLight.hpp"
 
 bool App::init() {
     auto mainWnd = mainApp.lock();
@@ -27,6 +28,10 @@ bool App::init() {
         _sceneGPU.push_back(createMesh(device,model->mesh()));
     }
     _scene->add(std::make_shared<PointLight>(glm::translate(glm::vec3(0.f,10.0f,0.0f)),glm::vec3(10.0f)));
+
+    // Load environment map
+    spImage4f env = loadImageHDRI("envs/spruit_sunrise_2k.hdr");
+    _scene->add(std::make_shared<EnvLight>(env,glm::vec3(0.1f)));
 
     _pt = std::make_shared<PathTracer>(device,_scene);
     _pt->init();
