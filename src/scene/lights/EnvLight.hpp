@@ -15,7 +15,10 @@ class EnvLight : public LightSource {
 		float pdfLi(const mango::sVertex &vertex, const glm::vec3 &inWorld) override;
 
 		glm::vec3 power() override;
-	private:
+
+	glm::vec3 le(const Ray &ray) override;
+
+private:
 		spImage4f _image;
 		glm::vec3 _light;
 		std::unique_ptr<Distribution2D> _dist;

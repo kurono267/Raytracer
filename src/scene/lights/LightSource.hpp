@@ -5,6 +5,7 @@
 #pragma once
 
 #include <mango.hpp>
+#include <scene/Ray.hpp>
 
 class LightSource {
 	public:
@@ -23,6 +24,10 @@ class LightSource {
 
 		virtual glm::vec3 sampleLi(const mango::sVertex& vertex, const glm::vec2& sample, glm::vec3& inWorld, float& pdf) = 0;
 		virtual float pdfLi(const mango::sVertex& vertex, const glm::vec3& inWorld) = 0;
+
+		virtual glm::vec3 le(const Ray& ray){
+			return glm::vec3(0.f);
+		}
 
 		virtual glm::vec3 power() = 0;
 	protected:

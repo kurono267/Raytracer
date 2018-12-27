@@ -76,7 +76,7 @@ void PathTracer::update(const mango::scene::spCamera& camera){
     if(!camera->isUpdated())_frames++;
 }
 
-const int maxDepth = 2;
+const int maxDepth = 4;
 
 void PathTracer::computeTile(const glm::ivec2 &start, const mango::scene::spCamera &camera) {
     auto right = camera->getRight();
@@ -172,6 +172,19 @@ void PathTracer::computeTile(const glm::ivec2 &start, const mango::scene::spCame
 									pixelColor += threshold * bsdfColor * li / lightPdf;
 								} else {
 									pixelColor += threshold * bsdfColor * li * powerHeuristic(1,lightPdf,1,bsdfPdf) / lightPdf;
+									// MIS
+									glm::vec3 inBSDF; BxDF::Type typeBSDF;
+									glm::vec3 f = bsdf->sample(out,glm::vec2(dis(gen),dis(gen)),inBSDF,bsdfPdf,typeBSDF);
+									f *= std::abs(glm::dot(in, vertex.normal));
+									bool isSpecular = typeBSDF & BxDF::SPECULAR;
+									float weight = 1.f;
+									if(!isSpecular){
+										lightPdf = light->pdfLi(vertex, in);
+										if(lightPdf == 0.0f)continue;
+										weight = powerHeuristic(1, bsdfPdf, 1, lightPdf);
+									}
+									auto li = light->le(ray);
+									if (!glm::all(glm::equal(li,glm::vec3(0.0f)))) pixelColor += f * li * weight / bsdfPdf;
 								}
 							}
 
