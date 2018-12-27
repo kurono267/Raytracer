@@ -13,16 +13,16 @@ const glm::mat3 RGB_2_XYZ = glm::mat3(
 
 EnvLight::EnvLight(const spImage4f &image, const glm::vec3 &light) : LightSource(Env, glm::mat4(1.0f)), _image(image),
 																	 _light(light) {
-	Image1f lightImage(image->size());
+	Image1f lightImage(glm::ivec2(image->height(),image->width()));
 	for (int y = 0; y < image->height(); ++y) {
 		float sinTheta = std::sin((float) M_PI * (y + .5f) / (float) image->height());
 		for (int x = 0; x < image->width(); ++x) {
 			glm::vec3 color = (*image)(x, y);
 			glm::vec3 xyz = RGB_2_XYZ * color;
-			lightImage(x, y) = sinTheta * xyz.y;
+			lightImage(y, x) = sinTheta * xyz.y;
 		}
 	}
-	_dist = std::make_unique<Distribution2D>(lightImage.data(), image->width(), image->height());
+	_dist = std::make_unique<Distribution2D>(lightImage.data(), lightImage.width(), lightImage.height());
 }
 
 glm::vec3 EnvLight::sampleLi(const mango::sVertex &vertex, const glm::vec2 &sample, glm::vec3 &inWorld, float &pdf) {
@@ -58,8 +58,8 @@ glm::vec3 EnvLight::power() {
 }
 
 glm::vec3 EnvLight::le(const Ray &ray) {
-	glm::vec3 w = _light2world*glm::vec4(ray.dir,1.0f);
+	glm::vec3 w = ray.dir;
 	w = glm::normalize(w);
-	glm::vec2 st(sphericalPhi(w) * INV_2PI, sphericalTheta(w) * INV_PI);
+	glm::vec2 st(sphericalTheta(w) * INV_PI, sphericalPhi(w) * INV_2PI);
 	return (*_image)(st);
 }

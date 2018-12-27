@@ -11,7 +11,7 @@ class Diffuse : public BxDF {
 public:
     Diffuse(const glm::vec3& _color, float _sigma);
 
-    glm::vec3 f(const glm::vec3 &out, const glm::vec3 &in) override;
+    glm::vec3 f(const glm::vec3 &out, const glm::vec3 &in) const override;
 protected:
     glm::vec3 color;
     float sigma;

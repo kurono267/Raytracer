@@ -41,3 +41,8 @@ inline float sphericalPhi(const glm::vec3& v) {
 	float p = std::atan2(v.y, v.x);
 	return (p < 0) ? (p + 2.f * (float)M_PI) : p;
 }
+
+inline glm::vec3 sphericalDirection(float sinTheta, float cosTheta, float phi) {
+	return glm::vec3(sinTheta * std::cos(phi), sinTheta * std::sin(phi),
+					cosTheta);
+}

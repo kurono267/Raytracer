@@ -25,10 +25,10 @@ class BxDF {
 
 		bool matchesFlags(Type t) const { return (type & t) == type; }
 
-        virtual glm::vec3 f(const glm::vec3& out, const glm::vec3& in) = 0;
-        virtual glm::vec3 sampled(const glm::vec3& out, const glm::vec2& sample, glm::vec3& in, float& pdf, Type& type);
+        virtual glm::vec3 f(const glm::vec3& out, const glm::vec3& in) const = 0;
+        virtual glm::vec3 sampled(const glm::vec3& out, const glm::vec2& sample, glm::vec3& in, float& pdf, Type& type) const ;
 
-        virtual float pdf(const glm::vec3& out, const glm::vec3& in);
+        virtual float pdf(const glm::vec3& out, const glm::vec3& in) const;
 
         const uint32_t type;
 };

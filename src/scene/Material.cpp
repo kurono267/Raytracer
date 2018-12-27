@@ -1,4 +1,5 @@
 #include "Material.hpp"
+#include "bsdf/Microfacet.hpp"
 
 using namespace boost::property_tree;
 using namespace mango;
@@ -199,6 +200,12 @@ spBSDF Material::computeBSDF(const sVertex &vertex, const glm::vec2 &dUVx, const
 
 	spBSDF bsdf = std::make_shared<BSDF>(vertex,1.f);
 	bsdf->add(std::make_shared<Diffuse>(diffColor,getRoughness()));
+
+	/*auto frMf = std::make_shared<FresnelConductor>(glm::vec3(0.5f), glm::vec3(0.5f), diffColor);
+	auto distrib = std::make_shared<BeckmannDistribution>(getRoughness(),getRoughness()+0.1f);
+
+	spBxDF reflection = std::make_shared<Reflection>(glm::vec3(1.f), distrib, frMf);
+	bsdf->add(reflection);*/
 
 	return bsdf;
 }

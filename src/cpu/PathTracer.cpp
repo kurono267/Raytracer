@@ -128,6 +128,12 @@ void PathTracer::computeTile(const glm::ivec2 &start, const mango::scene::spCame
                         vertexBlock[inBlockID] = _bvh.postIntersect(r, hit);
                         modelBlock[inBlockID] = scene->models()[hit.id0];
                         raysBlock[inBlockID] = r;
+                    } else {
+                    	glm::vec3 L(0.0f);
+                    	for(auto light : _scene->lights()){
+                    		L += light->le(r);
+                    	}
+						(*_frame)(x,y) = glm::vec4(L,1.0f);
                     }
                 }
             }
@@ -175,6 +181,7 @@ void PathTracer::computeTile(const glm::ivec2 &start, const mango::scene::spCame
 									// MIS
 									glm::vec3 inBSDF; BxDF::Type typeBSDF;
 									glm::vec3 f = bsdf->sample(out,glm::vec2(dis(gen),dis(gen)),inBSDF,bsdfPdf,typeBSDF);
+									if(bsdfPdf == 0.0f)continue;
 									f *= std::abs(glm::dot(in, vertex.normal));
 									bool isSpecular = typeBSDF & BxDF::SPECULAR;
 									float weight = 1.f;
@@ -219,8 +226,6 @@ void PathTracer::computeTile(const glm::ivec2 &start, const mango::scene::spCame
 						} else {
 							(*_frame)(x, y) = glm::vec4(pixelColor, 1.0f);
 						}
-                    } else {
-                        (*_frame)(x, y) = glm::vec4(0.0f);
                     }
                 }
             }

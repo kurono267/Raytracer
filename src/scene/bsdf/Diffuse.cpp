@@ -10,7 +10,7 @@ Diffuse::Diffuse(const glm::vec3 &_color, float _sigma) : BxDF(Type::DIFFUSE | T
     B = 0.45f * sigma2 / (sigma2 + 0.09f);
 }
 
-glm::vec3 Diffuse::f(const glm::vec3 &out, const glm::vec3 &in) {
+glm::vec3 Diffuse::f(const glm::vec3 &out, const glm::vec3 &in) const {
     float sinThetaI = sinTheta(in); float sinThetaO = sinTheta(out);
     float maxCos = 0;
     if (sinThetaI > 1e-4 && sinThetaO > 1e-4) {

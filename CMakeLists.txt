@@ -39,7 +39,7 @@ src/scene/lights/LightSource.hpp
 src/scene/lights/PointLight.cpp
 src/scene/lights/PointLight.hpp
 src/scene/lights/EnvLight.cpp
-src/scene/lights/EnvLight.hpp src/scene/samplers/Distributions.cpp src/scene/samplers/Distributions.hpp src/scene/Common.hpp)
+src/scene/lights/EnvLight.hpp src/scene/samplers/Distributions.cpp src/scene/samplers/Distributions.hpp src/scene/Common.hpp src/scene/bsdf/Microfacet.cpp src/scene/bsdf/Microfacet.hpp)
 
 add_executable(Raytracer src/app/main.cpp src/app/App.cpp ${SCENE_SRC})
 target_link_libraries(Raytracer mango boost_filesystem boost_system)
