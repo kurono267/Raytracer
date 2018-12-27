@@ -203,3 +203,16 @@ spBSDF Material::computeBSDF(const sVertex &vertex, const glm::vec2 &dUVx, const
 	return bsdf;
 }
 
+spBSDF Material::computeBSDF(const sVertex &vertex) {
+	// Get diffuse color from texture
+	auto repeatUV = glm::fract(vertex.uv);
+	glm::vec3 diffColor = _diffTexture ? filterLinear(*_diffTexture,repeatUV,0) : glm::vec3(255.0f);
+	diffColor /= 255.0f;
+	diffColor *= glm::vec3(_data.diffuseColor);
+
+	spBSDF bsdf = std::make_shared<BSDF>(vertex,1.f);
+	bsdf->add(std::make_shared<Diffuse>(diffColor,getRoughness()));
+
+	return bsdf;
+}
+

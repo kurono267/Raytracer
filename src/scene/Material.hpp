@@ -62,6 +62,7 @@ class Material {
 		spDescSet   getDescSet();
 
 		spBSDF computeBSDF(const sVertex& vertex, const glm::vec2& dUVx, const glm::vec2& dUVy);
+		spBSDF computeBSDF(const sVertex& vertex);
 	protected:
 		void read(const ptree& tree);           // Read material from ptree
 		void save(ptree& tree);
