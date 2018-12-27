@@ -76,6 +76,8 @@ void PathTracer::update(const mango::scene::spCamera& camera){
     if(!camera->isUpdated())_frames++;
 }
 
+const int maxDepth = 2;
+
 void PathTracer::computeTile(const glm::ivec2 &start, const mango::scene::spCamera &camera) {
     auto right = camera->getRight();
     auto forward = camera->getForward();
@@ -150,29 +152,56 @@ void PathTracer::computeTile(const glm::ivec2 &start, const mango::scene::spCame
 						auto material = model->material();
 						auto bsdf = material->computeBSDF(vertex,dUVx,dUVy);
 
-						glm::vec3 out = -raysBlock[yB*2+xB].dir;
-						glm::vec3 lightColor(0.0f);
-						for(auto light : _scene->lights()) {
-							glm::vec3 in; float lightPdf;
-							auto li = light->sampleLi(vertex, glm::vec2(dis(gen),dis(gen)), in, lightPdf);
-							auto shadowHit = _bvh.occluded(Ray(vertex.pos+in*0.1f,in));
-							if(shadowHit.status)continue;
-							auto bsdfColor = bsdf->f(out,in);
-							float bsdfPdf = bsdf->pdf(out,in);
-							li = glm::clamp(li,glm::vec3(0.0f),glm::vec3(1.0f));
+						auto ray = raysBlock[yB*2+xB];
 
-							lightColor += bsdfColor*bsdfPdf*li*lightPdf*light->power();
+						glm::vec3 out = -ray.dir;
+						glm::vec3 pixelColor(0.f);
+						glm::vec3 threshold(1.0f);
+						for(int d = 0;d<maxDepth;++d) {
+							for (auto light : _scene->lights()) {
+								glm::vec3 in;
+								float lightPdf;
+								auto li = light->sampleLi(vertex, glm::vec2(dis(gen), dis(gen)), in, lightPdf);
+								auto shadowHit = _bvh.occluded(Ray(vertex.pos + in * 0.1f, in));
+								if (shadowHit.status)continue;
+								auto bsdfColor = bsdf->f(out, in);
+								float bsdfPdf = bsdf->pdf(out, in);
+
+								if(light->isDelta()){
+									pixelColor += threshold * bsdfColor * li / lightPdf;
+								} else {
+									pixelColor += threshold * bsdfColor * li * powerHeuristic(1,lightPdf,1,bsdfPdf) / lightPdf;
+								}
+							}
+
+							// Sampling BSDF
+							glm::vec3 nextDir(0.0f); float nextPDF = 0.0f; BxDF::Type nextType;
+							glm::vec3 bsdfColor = bsdf->sample(out,glm::vec2(dis(gen),dis(gen)),nextDir,nextPDF,nextType);
+
+							threshold *= bsdfColor/nextPDF;
+							ray = Ray(vertex.pos+nextDir*0.1f,nextDir);
+							auto hit = _bvh.intersect(ray);
+							if(hit.status){
+								vertex = _bvh.postIntersect(ray,hit);
+								model = scene->models()[hit.id0];
+								material = model->material();
+								bsdf = material->computeBSDF(vertex,dUVx,dUVy);
+								out = -ray.dir;
+							} else {
+								break;
+							}
+
 						}
 
 						if(_frames != 0.0f) {
 							glm::vec3 prevFrame = (*_frame)(x, y);
 							prevFrame *= (float)_frames;
-							prevFrame += lightColor;
+							prevFrame += pixelColor;
 							prevFrame /= (float)_frames+1.f;
 
 							(*_frame)(x, y) = glm::vec4(prevFrame, 1.0f);
 						} else {
-							(*_frame)(x, y) = glm::vec4(lightColor, 1.0f);
+							(*_frame)(x, y) = glm::vec4(pixelColor, 1.0f);
 						}
                     } else {
                         (*_frame)(x, y) = glm::vec4(0.0f);

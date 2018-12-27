@@ -23,3 +23,8 @@ int findInterval(int size, const Predicate &pred) {
 	}
 	return clamp(first - 1, 0, size - 2);
 }
+
+inline float powerHeuristic(int nf, float fPdf, int ng, float gPdf) {
+	float f = nf * fPdf, g = ng * gPdf;
+	return (f * f) / (f * f + g * g);
+}

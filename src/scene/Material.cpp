@@ -34,6 +34,8 @@ void Material::read(const ptree& tree){
 		}
 	}
 
+	_data.diffuseColor = glm::pow(_data.diffuseColor,glm::vec4(2.4f));
+
 	_diffuseFilename = tree.get<std::string>("diffuseTexture","");
 	_normalFilename  = tree.get<std::string>("normalTexture","");
 	_heightmapFilename = tree.get<std::string>("heightmapTexture","");
