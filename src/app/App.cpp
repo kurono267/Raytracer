@@ -30,8 +30,8 @@ bool App::init() {
     _scene->add(std::make_shared<PointLight>(glm::translate(glm::vec3(0.f,10.0f,0.0f)),glm::vec3(10.0f)));
 
     // Load environment map
-    spImage4f env = loadImageHDRI("envs/spruit_sunrise_2k.hdr");
-    //_scene->add(std::make_shared<EnvLight>(env,glm::vec3(0.1f)));
+    spImage4f env = loadImageHDRI("envs/spruit_sunrise_2k.hdr",true);
+    _scene->add(std::make_shared<EnvLight>(env,glm::vec3(0.5f)));
 
     _pt = std::make_shared<PathTracer>(device,_scene);
     _pt->init();

@@ -9,7 +9,7 @@ Distribution1D::Distribution1D(const std::vector<float> &data) : func(data) {
 	cdf[0] = 0.f;
 	auto n = data.size();
 	for (int i = 1; i < cdf.size(); ++i) {
-		cdf[i] = (cdf[i - 1] + func[i - 1]) / (float) n;
+		cdf[i] = cdf[i - 1] + func[i - 1] / (float) n;
 	}
 	funcInt = cdf[n];
 	if (funcInt == 0) {
@@ -62,6 +62,7 @@ glm::vec2 Distribution2D::sampleContinuous(const glm::vec2 &u, float& pdf) const
 	int v;
 	float d1 = pMarginal->sampleContinuous(u[1], pdfs[1], &v);
 	float d0 = pConditionalV[v]->sampleContinuous(u[0], pdfs[0]);
+	//std::cout << d0 << "," << d1 << std::endl;
 	pdf = pdfs[0] * pdfs[1];
 	return glm::vec2(d0, d1);
 }

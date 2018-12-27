@@ -159,6 +159,7 @@ void PathTracer::computeTile(const glm::ivec2 &start, const mango::scene::spCame
 							if(shadowHit.status)continue;
 							auto bsdfColor = bsdf->f(out,in);
 							float bsdfPdf = bsdf->pdf(out,in);
+							li = glm::clamp(li,glm::vec3(0.0f),glm::vec3(1.0f));
 
 							lightColor += bsdfColor*bsdfPdf*li*lightPdf*light->power();
 						}
