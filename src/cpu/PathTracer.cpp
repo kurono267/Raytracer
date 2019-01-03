@@ -82,7 +82,7 @@ void PathTracer::computeTile(const glm::ivec2 &start, const mango::scene::spCame
     auto right = camera->getRight();
     auto forward = camera->getForward();
     auto pos = camera->getPos();
-    auto up = camera->getUp();
+    auto up = glm::normalize(glm::cross(right,forward));
 
     auto scene = _bvh.getScene();
 
