@@ -23,6 +23,8 @@ class Scene {
 		void load(const std::string& filename);
 		void save(const std::string& filename);
 
+		void loadGLTF(const std::string& filename);
+
 		std::string getFilename();
 
 		std::vector<spModel>& models();

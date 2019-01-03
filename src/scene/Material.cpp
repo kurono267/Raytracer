@@ -111,6 +111,7 @@ glm::vec3 Material::getDiffuseColor(){
 
 void Material::setDiffuseTexture(const std::string& filename){
 	_diffuseFilename = filename;
+	_diffTexture = _cache->load(_path+"/"+_diffuseFilename);
 }
 
 void Material::setNormalTexture(const std::string& filename){

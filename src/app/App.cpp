@@ -23,7 +23,7 @@ bool App::init() {
     _camera->initProj(glm::radians(45.0f),(float)(1280)/(float)(720),0.1f,1000.0f);
 
     _scene = std::make_shared<Scene>();
-    _scene->load("models/lambo/lambo");
+    _scene->loadGLTF("models/room/scene.gltf");
     for(auto model : _scene->models()){
         _sceneGPU.push_back(createMesh(device,model->mesh()));
     }

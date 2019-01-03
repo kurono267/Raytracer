@@ -9,7 +9,7 @@ include_directories(external/Mango/src)
 link_directories($ENV{VULKAN_SDK}/lib/)
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/bin)
-include_directories(${GLFW_INCLUDE_DIRS} ${GLM_INCLUDE_DIRS} ${Vulkan_INCLUDE_DIR} src)
+include_directories(${GLFW_INCLUDE_DIRS} ${GLM_INCLUDE_DIRS} ${Vulkan_INCLUDE_DIR} src external/tinygltf)
 
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O2")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -mavx")
@@ -39,7 +39,12 @@ src/scene/lights/LightSource.hpp
 src/scene/lights/PointLight.cpp
 src/scene/lights/PointLight.hpp
 src/scene/lights/EnvLight.cpp
-src/scene/lights/EnvLight.hpp src/scene/samplers/Distributions.cpp src/scene/samplers/Distributions.hpp src/scene/Common.hpp src/scene/bsdf/Microfacet.cpp src/scene/bsdf/Microfacet.hpp)
+src/scene/lights/EnvLight.hpp
+src/scene/samplers/Distributions.cpp
+src/scene/samplers/Distributions.hpp
+src/scene/Common.hpp
+src/scene/bsdf/Microfacet.cpp
+src/scene/bsdf/Microfacet.hpp)
 
 add_executable(Raytracer src/app/main.cpp src/app/App.cpp ${SCENE_SRC})
 target_link_libraries(Raytracer mango boost_filesystem boost_system)
