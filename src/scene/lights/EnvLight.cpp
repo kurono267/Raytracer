@@ -39,7 +39,7 @@ glm::vec3 EnvLight::sampleLi(const mango::sVertex &vertex, const glm::vec2 &samp
 	pdf = mapPdf / (2 * (float) M_PI * (float) M_PI * sinTheta);
 	if (!std::isfinite(pdf))pdf = 0.0f;
 
-	return (*_image)(uv) * glm::vec4(_light, 1.0f);
+	return filterLinear(*_image,uv,0) * glm::vec4(_light, 1.0f);
 }
 
 float EnvLight::pdfLi(const mango::sVertex &vertex, const glm::vec3 &inWorld) {
@@ -60,6 +60,6 @@ glm::vec3 EnvLight::power() {
 glm::vec3 EnvLight::le(const Ray &ray) {
 	glm::vec3 w = ray.dir;
 	w = glm::normalize(w);
-	glm::vec2 st(sphericalTheta(w) * INV_PI, sphericalPhi(w) * INV_2PI);
-	return (*_image)(st);
+	glm::vec2 st(sphericalPhi(w) * INV_2PI, sphericalTheta(w) * INV_PI);
+	return filterLinear(*_image,st,0);
 }

@@ -24,6 +24,7 @@ bool App::init() {
 
     _scene = std::make_shared<Scene>();
     _scene->loadGLTF("models/room/scene.gltf");
+    //_scene->load("models/lambo/lambo");
     for(auto model : _scene->models()){
         _sceneGPU.push_back(createMesh(device,model->mesh()));
     }

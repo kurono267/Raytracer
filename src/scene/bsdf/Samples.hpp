@@ -30,16 +30,16 @@ inline glm::vec2 concentricSampleDisk(const glm::vec2& u) {
 inline glm::vec3 cosineSampleHemisphere(const glm::vec2& u) {
 	glm::vec2 d = concentricSampleDisk(u);
 	float z = std::sqrt(std::max(0.f, 1.f - d.x * d.x - d.y * d.y));
-	return glm::vec3(d.x, d.y, z);
+	return glm::vec3(d.x, z, d.y);
 }
 
 inline float sphericalTheta(const glm::vec3& v) {
-	return std::acos(clamp(v.z, -1, 1));
+	return std::acos(clamp(v.y, -1.f, 1.f));
 }
 
 inline float sphericalPhi(const glm::vec3& v) {
-	float p = std::atan2(v.y, v.x);
-	return (p < 0) ? (p + 2.f * (float)M_PI) : p;
+	float p = std::atan2(-v.z, -v.x);
+	return (p < 0.f) ? (p + 2.f * (float)M_PI) : p;
 }
 
 inline glm::vec3 sphericalDirection(float sinTheta, float cosTheta, float phi) {

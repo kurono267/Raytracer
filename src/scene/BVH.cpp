@@ -90,7 +90,7 @@ RayHit BVH::occluded(const Ray &ray) {
                     auto id0 = _indices[triId]; auto id1 = _indices[triId+1]; auto id2 = _indices[triId+2];
                     auto vp0 = _vertices[id0]; auto vp1 = _vertices[id1]; auto vp2 = _vertices[id2];
                     test = intersectTriangle(ray,vp0.pos,vp1.pos,vp2.pos);
-                    if(test.status){
+                    if(test.status && test.dist > 0.0001f){
                         hit = test;
                         hit.id1 = triId;
                         hit.id0 = curr.modelIds[i];
@@ -136,7 +136,7 @@ void BVH::intersect(const Ray &ray, RayHit& hit, BVHNode &curr) {
                 auto id0 = _indices[triId]; auto id1 = _indices[triId+1]; auto id2 = _indices[triId+2];
                 auto vp0 = _vertices[id0]; auto vp1 = _vertices[id1]; auto vp2 = _vertices[id2];
                 auto test = intersectTriangle(ray,vp0.pos,vp1.pos,vp2.pos);
-                if(test.status && test.dist < hit.dist){
+                if(test.status && test.dist > 0.0001f && test.dist < hit.dist){
                     hit = test;
                     hit.id1 = triId;
                     hit.id0 = curr.modelIds[i];

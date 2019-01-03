@@ -210,8 +210,10 @@ void Scene::recursiveLoadNodes(const std::string& filename,const tinygltf::Node&
 				const tinygltf::Buffer &normalBuffer = tfModel.buffers[posBufferView.buffer];
 				const float *normals = reinterpret_cast<const float *>(&normalBuffer.data[normalBufferView.byteOffset +
 																						  normalAccess.byteOffset]);
-				for (size_t i = 0; i < posAccess.count; ++i) {
-					vertices[i].normal = glm::vec3(normals[i * 3 + 0], normals[i * 3 + 1], normals[i * 3 + 2]);
+				for (size_t i = 0; i < normalAccess.count; ++i) {
+					glm::vec4 normal(normals[i * 3 + 0], normals[i * 3 + 1], normals[i * 3 + 2], 1.0f);
+					normal = nodeTransform*normal;
+					vertices[i].normal = glm::normalize(glm::vec3(normal.x,normal.z,normal.y));
 				}
 			}
 

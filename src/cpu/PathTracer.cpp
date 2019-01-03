@@ -167,7 +167,7 @@ void PathTracer::computeTile(const glm::ivec2 &start, const mango::scene::spCame
 								float lightPdf;
 								auto li = light->sampleLi(vertex, glm::vec2(dis(gen), dis(gen)), in, lightPdf);
 								if(lightPdf == 0.0f)continue;
-								auto shadowHit = _bvh.occluded(Ray(vertex.pos + in * 0.1f, in));
+								auto shadowHit = _bvh.occluded(Ray(vertex.pos, in));
 								if (shadowHit.status)continue;
 								auto bsdfColor = bsdf->f(out, in);
 								float bsdfPdf = bsdf->pdf(out, in);
@@ -200,7 +200,7 @@ void PathTracer::computeTile(const glm::ivec2 &start, const mango::scene::spCame
 							if(glm::all(glm::equal(bsdfColor,glm::vec3(0.0f))) || nextPDF == 0.0f)break;
 
 							threshold *= bsdfColor*std::abs(glm::dot(nextDir, vertex.normal))/nextPDF;
-							ray = Ray(vertex.pos+nextDir*0.1f,nextDir);
+							ray = Ray(vertex.pos,nextDir);
 							auto hit = _bvh.intersect(ray);
 							if(hit.status){
 								vertex = _bvh.postIntersect(ray,hit);
