@@ -97,8 +97,6 @@ void PathTracer::computeTile(const glm::ivec2 &start, const mango::scene::spCame
     Ray     raysBlock[4];
     glm::vec2 ptSize(PT_WIDTH,PT_HEIGHT);
 
-    glm::vec3 dir(0.0f,1.0f,0.0f);
-
     for(int yBlock = start.y;yBlock<start.y+tileSize;yBlock+=2){
         if(yBlock >= PT_HEIGHT)break;
         for(int xBlock = start.x;xBlock<start.x+tileSize;xBlock+=2){

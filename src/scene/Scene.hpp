@@ -6,6 +6,8 @@
 #include <boost/property_tree/json_parser.hpp>
 #include "lights/LightSource.hpp"
 
+#include <tiny_gltf.h>
+
 class Scene {
 	const std::string binExt = "r267b";
 	const std::string mtlExt = "json";
@@ -32,6 +34,8 @@ class Scene {
 		std::vector<spLightSource>& lights();
 
 		bool equal(const std::shared_ptr<Scene>& scene);
+	protected:
+		void recursiveLoadNodes(const std::string& filename,const tinygltf::Node& tfNode,tinygltf::Model& tfModel, const glm::mat4& transform);
 	protected:
 		std::vector<spModel> _models;
 		std::vector<spLightSource> _lights;
