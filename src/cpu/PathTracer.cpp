@@ -17,8 +17,9 @@ void PathTracer::init() {
     _bvh.runLBVH(_scene);
 
     _texture = _device->createTexture(PT_WIDTH,PT_HEIGHT,1,Format::R32G32B32A32Sfloat,TextureType::Input);
-    _frame = std::make_shared<Image4f>(glm::ivec2(PT_WIDTH,PT_HEIGHT),1,glm::vec4(0.0f));
-    _textureCPU = _device->createBuffer(BufferType::CPU,MemoryType::HOST,PT_WIDTH*PT_HEIGHT*sizeof(glm::vec4),(void*)_frame->data().data());
+    _frame[0] = std::make_shared<Image4f>(glm::ivec2(PT_WIDTH,PT_HEIGHT),1,glm::vec4(0.0f));
+	_frame[1] = std::make_shared<Image4f>(glm::ivec2(PT_WIDTH,PT_HEIGHT),1,glm::vec4(0.0f));
+    _textureCPU = _device->createBuffer(BufferType::CPU,MemoryType::HOST,PT_WIDTH*PT_HEIGHT*sizeof(glm::vec4),(void*)_frame[_frameID]->data().data());
 }
 
 spTexture PathTracer::getTexture() {
@@ -26,17 +27,17 @@ spTexture PathTracer::getTexture() {
 }
 
 void PathTracer::sync() {
-    _textureCPU->set(PT_WIDTH*PT_HEIGHT*sizeof(glm::vec4),(void*)_frame->data().data());
+    _textureCPU->set(PT_WIDTH*PT_HEIGHT*sizeof(glm::vec4),(void*)_frame[(_frameID+1)%2]->data().data());
     _texture->set(_textureCPU);
 }
 
 const uint32_t tileSize = 16;
 const uint32_t threadsMax = 16;
 
-void PathTracer::update(const mango::scene::spCamera& camera){
-	if(camera->isUpdated()){
+void PathTracer::update(){
+	if(_camera->isUpdated()){
 		_frames = 0.0f;
-		camera->updateFinish();
+		_camera->updateFinish();
 	}
     auto start = std::chrono::system_clock::now();
 
@@ -49,13 +50,13 @@ void PathTracer::update(const mango::scene::spCamera& camera){
     std::atomic_int counter = threadsMax;
 
     for(int th = 0;th<threadsMax;++th) {
-        std::thread t([this,&counter,&m,&cv,&tileCurr,&tileCount,tilesRes,camera]() {
+        std::thread t([this,&counter,&m,&cv,&tileCurr,&tileCount,tilesRes]() {
             while(tileCurr < tileCount){
                 int currTile = tileCurr++;
                 glm::ivec2 tileStart(currTile%tilesRes.x,currTile/tilesRes.x);
                 tileStart *= tileSize;
 
-                computeTile(tileStart,camera);
+                computeTile(tileStart,_camera);
             }
 
             std::lock_guard<std::mutex> lk(m);
@@ -73,17 +74,12 @@ void PathTracer::update(const mango::scene::spCamera& camera){
     std::cout << "PT Time:" << frameTime*1000.0f << " ms" << std::endl;
     std::cout << "FPS: " << 1.0f/frameTime << std::endl;
 
-    if(!camera->isUpdated())_frames++;
+    if(!_camera->isUpdated())_frames++;
 }
 
 const int maxDepth = 4;
 
 void PathTracer::computeTile(const glm::ivec2 &start, const mango::scene::spCamera &camera) {
-    auto right = camera->getRight();
-    auto forward = camera->getForward();
-    auto pos = camera->getPos();
-    auto up = glm::normalize(glm::cross(right,forward));
-
     auto scene = _bvh.getScene();
 
     std::random_device rd;
@@ -113,12 +109,12 @@ void PathTracer::computeTile(const glm::ivec2 &start, const mango::scene::spCame
                     float normalized_j = ((float) y / (float) PT_HEIGHT) - 0.5f;
                     normalized_j = -normalized_j;
                     normalized_j *= ((float) PT_HEIGHT / (float) PT_WIDTH);
-                    glm::vec3 image_point = normalized_i * right +
-                                            normalized_j * up
-                                            + forward;
+                    glm::vec3 image_point = normalized_i * _right +
+                                            normalized_j * _up
+                                            + _forward;
                     glm::vec3 ray_direction = normalize(image_point);
 
-                    Ray r(pos, ray_direction);
+                    Ray r(_pos, ray_direction);
                     auto hit = _bvh.intersect(r);
                     auto inBlockID = yB*2+xB;
                     statusBlock[inBlockID] = hit.status;
@@ -131,7 +127,7 @@ void PathTracer::computeTile(const glm::ivec2 &start, const mango::scene::spCame
                     	for(auto light : _scene->lights()){
                     		L += light->le(r);
                     	}
-						(*_frame)(x,y) = glm::vec4(L,1.0f);
+						(*_frame[_frameID])(x,y) = glm::vec4(L,1.0f);
                     }
                 }
             }
@@ -215,14 +211,14 @@ void PathTracer::computeTile(const glm::ivec2 &start, const mango::scene::spCame
 						}
 
 						if(_frames != 0.0f) {
-							glm::vec3 prevFrame = (*_frame)(x, y);
+							glm::vec3 prevFrame = (*_frame[(_frameID+1)%2])(x, y);
 							prevFrame *= (float)_frames;
 							prevFrame += pixelColor;
 							prevFrame /= (float)_frames+1.f;
 
-							(*_frame)(x, y) = glm::vec4(prevFrame, 1.0f);
+							(*_frame[_frameID])(x, y) = glm::vec4(prevFrame, 1.0f);
 						} else {
-							(*_frame)(x, y) = glm::vec4(pixelColor, 1.0f);
+							(*_frame[_frameID])(x, y) = glm::vec4(pixelColor, 1.0f);
 						}
                     }
                 }
@@ -230,4 +226,34 @@ void PathTracer::computeTile(const glm::ivec2 &start, const mango::scene::spCame
 
         }
     }
+}
+
+void PathTracer::run() {
+	_renderThread = std::make_shared<std::thread>([this]() {
+		while (_isRun) {
+			if(!_isFinish){
+				update();
+				_frameID = (_frameID+1)%2;
+				_isFinish = true;
+			}
+		}
+	});
+}
+
+bool PathTracer::isUpdateFinish() {
+	return _isFinish;
+}
+
+void PathTracer::nextFrame(const mango::scene::spCamera &camera) {
+	_camera = camera;
+	_right = camera->getRight();
+	_forward = camera->getForward();
+	_pos = camera->getPos();
+	_up = glm::normalize(glm::cross(_right,_forward));
+	_isFinish = false;
+}
+
+void PathTracer::finish() {
+	_isRun = false;
+	while(!_isFinish){}
 }

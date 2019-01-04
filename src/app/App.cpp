@@ -87,6 +87,9 @@ bool App::init() {
     _screenAvailable = device->createSemaphore();
     _renderFinish = device->createSemaphore();
 
+    _pt->nextFrame(_camera);
+    _pt->run();
+
     return true;
 }
 
@@ -108,8 +111,10 @@ bool App::draw() {
 bool App::update() {
     std::cout << "CameraPos: " << glm::to_string(_camera->getPos()) << std::endl;
     _camera->updateUniform();
-    _pt->update(_camera);
-    _pt->sync();
+    if(_pt->isUpdateFinish()){
+        _pt->sync();
+        _pt->nextFrame(_camera);
+    }
     return true;
 }
 
