@@ -6,6 +6,9 @@
 #include "scene/lights/PointLight.hpp"
 #include "scene/lights/EnvLight.hpp"
 
+const int FRAME_WIDTH = 128*5;
+const int FRAME_HEIGHT = 72*5;
+
 bool App::init() {
     auto mainWnd = mainApp.lock();
 
@@ -34,11 +37,10 @@ bool App::init() {
     spImage4f env = loadImageHDRI("envs/spruit_sunrise_2k.hdr",true);
     _scene->add(std::make_shared<EnvLight>(env,glm::vec3(10.0f)));
 
-    _pt = std::make_shared<PathTracer>(device,_scene);
-    _pt->init();
+    _integrator = std::make_shared<PathTracer>(device,_scene,FRAME_WIDTH,FRAME_HEIGHT);
 
     _texture = checkboardTexture(device, 1280, 720, 100);
-    auto texView = _pt->getTexture()->createTextureView();
+    auto texView = _integrator->getTexture()->createTextureView();
 
     _descSet = device->createDescSet();
     _descSet->setUniformBuffer(_camera->getCameraUniform(), 0, ShaderStage::Vertex);
@@ -87,8 +89,8 @@ bool App::init() {
     _screenAvailable = device->createSemaphore();
     _renderFinish = device->createSemaphore();
 
-    _pt->nextFrame(_camera);
-    _pt->run();
+    _integrator->nextFrame(_camera);
+    _integrator->run();
 
     return true;
 }
@@ -111,9 +113,9 @@ bool App::draw() {
 bool App::update() {
     std::cout << "CameraPos: " << glm::to_string(_camera->getPos()) << std::endl;
     _camera->updateUniform();
-    if(_pt->isUpdateFinish()){
-        _pt->sync();
-        _pt->nextFrame(_camera);
+    if(_integrator->isUpdateFinish()){
+        _integrator->sync();
+        _integrator->nextFrame(_camera);
     }
     return true;
 }

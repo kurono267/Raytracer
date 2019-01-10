@@ -10,6 +10,7 @@
 #include "scene/Camera.hpp"
 #include "../scene/Scene.hpp"
 #include "../cpu/PathTracer.hpp"
+#include "../cpu/BDPT.hpp"
 
 using namespace mango;
 using namespace mango::scene;
@@ -36,7 +37,7 @@ protected:
     spMesh _cube;
     spMesh _quad;
 
-    spPathTracer _pt;
+    spIntegrator _integrator;
 
     spTexture _texture;
     spScene _scene;

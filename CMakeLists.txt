@@ -44,7 +44,7 @@ src/scene/samplers/Distributions.cpp
 src/scene/samplers/Distributions.hpp
 src/scene/Common.hpp
 src/scene/bsdf/Microfacet.cpp
-src/scene/bsdf/Microfacet.hpp)
+src/scene/bsdf/Microfacet.hpp src/cpu/BDPT.cpp src/cpu/BDPT.hpp src/cpu/Integrator.hpp src/cpu/Integrator.cpp)
 
 add_executable(Raytracer src/app/main.cpp src/app/App.cpp ${SCENE_SRC})
 target_link_libraries(Raytracer mango boost_filesystem boost_system)
