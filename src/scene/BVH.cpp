@@ -339,4 +339,62 @@ spScene BVH::getScene() {
     return _scene;
 }
 
+RayHit16 BVH::intersect16(const Ray16 &ray) {
+    // Check root, if not return
+    auto rootNode = _nodes[rootId];
+    RayHit16 hit = intersectBBox(ray,_nodes[rootId].box);
+    auto rootStatus = hit.status != 0.f;
+    /*if(none(rootStatus)){
+        hit.status = 0.f;
+        hit.dist   = std::numeric_limits<float>::infinity();
+        return hit;
+    }*/
+    If(hit.status != 0.f,[&](){
+        hit.status = 0.f;
+        hit.dist   = std::numeric_limits<float>::infinity();
+
+        intersect16(ray,hit,rootNode);
+    });
+    return hit;
+}
+
+void BVH::intersect16(const Ray16 &ray, RayHit16 &hit, BVHNode &curr) {
+    if(curr.isLeaf){ // Leaf
+        // Check triangles
+        auto triIds = curr.triIds;
+        for(int i = 0;i<4;++i){
+            int triId = triIds[i];
+            if(triId >= 0){
+                auto id0 = _indices[triId]; auto id1 = _indices[triId+1]; auto id2 = _indices[triId+2];
+                auto vp0 = _vertices[id0]; auto vp1 = _vertices[id1]; auto vp2 = _vertices[id2];
+                auto test = intersectTriangle(ray,vp0.pos,vp1.pos,vp2.pos);
+                If(test.status != 0.f & test.dist > 0.0001f & test.dist < hit.dist,[&](){
+                    hit = test;
+                    hit.id1 = triId;
+                    hit.id0 = curr.modelIds[i];
+                });
+            }
+        }
+    } else {
+        // Check left and right child
+        int leftID  = curr.data.left;
+        int rightID = curr.data.right;
+
+        auto leftNode = _nodes[leftID];
+        auto rightNode = _nodes[rightID];
+
+        RayHit16 left = intersectBBox(ray,_nodes[leftID].box);
+        RayHit16 right = intersectBBox(ray,_nodes[rightID].box);
+
+        auto leftStatus  = left.status != 0.f & left.dist < hit.dist;
+        auto rightStatus = right.status != 0.f & right.dist < hit.dist;
+
+        If(leftStatus & rightStatus,[&](){
+            intersect16(ray,hit,leftNode);
+            intersect16(ray,hit,rightNode);
+        }).ElseIf(leftStatus,[&](){intersect16(ray,hit,leftNode);})
+        .ElseIf(rightStatus,[&](){intersect16(ray,hit,rightNode);});
+    }
+}
+
 

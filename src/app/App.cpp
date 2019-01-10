@@ -37,7 +37,7 @@ bool App::init() {
     spImage4f env = loadImageHDRI("envs/spruit_sunrise_2k.hdr",true);
     _scene->add(std::make_shared<EnvLight>(env,glm::vec3(10.0f)));
 
-    _integrator = std::make_shared<PathTracer>(device,_scene,FRAME_WIDTH,FRAME_HEIGHT);
+    _integrator = std::make_shared<PathTracer16>(device,_scene,FRAME_WIDTH,FRAME_HEIGHT);
 
     _texture = checkboardTexture(device, 1280, 720, 100);
     auto texView = _integrator->getTexture()->createTextureView();

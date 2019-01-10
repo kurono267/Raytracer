@@ -32,7 +32,6 @@ class BVH {
 		BVH();
 		virtual ~BVH();
 
-		void run(const spScene& scene);
 		void runLBVH(const spScene& scene);
 
 		RayHit intersect(const Ray& ray);
@@ -40,13 +39,15 @@ class BVH {
 
 		RayHit occluded(const Ray &ray);
 
+		RayHit16 intersect16(const Ray16& ray);
+
 		spScene getScene();
 
 		std::vector<BVHNode>& nodes();
 		size_t rootID();
 	protected:
-		void recursive(BVHNode& root, std::vector<Prim>& primitives,uint32_t start, uint32_t end, int depth, uint mesh_id); // BVH
 		void intersect(const Ray& ray, RayHit& hit, BVHNode& node);
+		void intersect16(const Ray16& ray, RayHit16& hit, BVHNode& node);
 
         void recursiveLBVH(BVHNode& root, const std::vector<Prim>& primitives,uint32_t start, uint32_t end, int depth, uint mesh_id);
         uint32_t findSplitLBVH(const std::vector<Prim>& primitives,uint32_t start, uint32_t end);

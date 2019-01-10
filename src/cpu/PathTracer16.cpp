@@ -25,6 +25,7 @@ void PathTracer16::computeTile(const glm::ivec2 &start, const mango::scene::spCa
 	int blockSize = 4;
 
 	vec3f16 cameraPos(_pos.x,_pos.y,_pos.z);
+	clearMask16();
 
 	for(int yBlock = start.y;yBlock<start.y+tileSize;yBlock+=blockSize){
 		if(yBlock >= _height)break;
@@ -57,8 +58,28 @@ void PathTracer16::computeTile(const glm::ivec2 &start, const mango::scene::spCa
 				}
 			}
 
+			RayHit16 hit = _bvh.intersect16(ray16);
 
+			clearMask16();
+			vec3f16 color = vec3f16(0.5f);
+			If(hit.status != 0.f,[&](){
+				color = vec3f16(/*hit.dist*/1.f);
+			}).Else([&](){
+				color = vec3f16(0.0f);
+			});
 
+			for(int yB = 0;yB<blockSize;++yB) {
+				int y = yBlock + yB;
+				if (y >= _height)break;
+				for (int xB = 0; xB < blockSize; ++xB) {
+					int x = xBlock + xB;
+					if (x >= _width)break;
+
+					int id = yB*blockSize+xB;
+
+					(*_frame[_frameID])(x, y) = glm::vec4(color.x[id],color.y[id],color.z[id],1.f);
+				}
+			}
 		}
 	}
 }
