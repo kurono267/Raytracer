@@ -28,23 +28,23 @@ src/scene/BBox.cpp
 src/scene/Ray.cpp
 src/scene/ImagesCache.cpp
 src/scene/ImagesCache.hpp
-src/scene/bsdf/BxDF.hpp
-src/scene/bsdf/Diffuse.cpp
-src/scene/bsdf/Diffuse.hpp
-src/scene/bsdf/BxDF.cpp
-src/scene/bsdf/Samples.hpp
-src/scene/bsdf/BSDF.cpp
-src/scene/bsdf/BSDF.hpp
-src/scene/lights/LightSource.hpp
-src/scene/lights/PointLight.cpp
-src/scene/lights/PointLight.hpp
-src/scene/lights/EnvLight.cpp
-src/scene/lights/EnvLight.hpp
-src/scene/samplers/Distributions.cpp
-src/scene/samplers/Distributions.hpp
+        src/bsdf/BxDF.hpp
+        src/bsdf/Diffuse.cpp
+        src/bsdf/Diffuse.hpp
+        src/bsdf/BxDF.cpp
+        src/bsdf/Samples.hpp
+        src/bsdf/BSDF.cpp
+        src/bsdf/BSDF.hpp
+        src/lights/LightSource.hpp
+        src/lights/PointLight.cpp
+        src/lights/PointLight.hpp
+        src/lights/EnvLight.cpp
+        src/lights/EnvLight.hpp
+        src/samplers/Distributions.cpp
+        src/samplers/Distributions.hpp
 src/scene/Common.hpp
-src/scene/bsdf/Microfacet.cpp
-src/scene/bsdf/Microfacet.hpp src/cpu/BDPT.cpp src/cpu/BDPT.hpp src/cpu/Integrator.hpp src/cpu/Integrator.cpp)
+        src/bsdf/Microfacet.cpp
+        src/bsdf/Microfacet.hpp src/cpu/BDPT.cpp src/cpu/BDPT.hpp src/cpu/Integrator.hpp src/cpu/Integrator.cpp)
 
 add_executable(Raytracer src/app/main.cpp src/app/App.cpp ${SCENE_SRC})
 target_link_libraries(Raytracer mango boost_filesystem boost_system)
