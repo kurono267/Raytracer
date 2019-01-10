@@ -3,5 +3,6 @@
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/external/Mango" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/simd" vcs="Git" />
   </component>
 </project>

@@ -15,7 +15,6 @@ RayHit::RayHit(){
 }
 
 RayHit intersectBBox(const Ray& ray,const BBox &box) {
-
     RayHit hit;
 
     vec3 lov = ray.invdir*(box.min - ray.org);
@@ -66,4 +65,68 @@ RayHit intersectTriangle(const Ray& ray,const glm::vec3 &v0, const glm::vec3 &v1
 
     return hit;
 }
+
+RayHit16::RayHit16() {
+    status = 0.f;
+    dist = std::numeric_limits<float>::infinity();
+    id0 = -1.f;
+    id1 = -1.f;
+    bc = glm::vec3(0.0f);
+}
+
+RayHit16 intersectBBox(const Ray16 &ray, const BBox &box) {
+    RayHit16 hit;
+
+    vec3f16 boxMin(box.min.x,box.min.y,box.min.z);
+    vec3f16 boxMax(box.max.x,box.max.y,box.max.z);
+
+    vec3f16 lov = ray.invdir*(boxMin - ray.org);
+    vec3f16 hiv = ray.invdir*(boxMax - ray.org);
+
+    vec3f16 max_v = max(lov, hiv);
+    vec3f16 min_v = min(lov, hiv);
+
+    Float16 tmin  = max(min_v.x,max(min_v.y,min_v.z));//reduce_max(min(lov, hiv));
+    Float16 tmax =  min(max_v.x,min(max_v.y,max_v.z));
+
+    If(tmin <= tmax & (tmax > 0.0f),[&](){
+        hit.dist = tmin;
+        hit.status = true;
+    });
+    return hit;
+}
+
+RayHit16 intersectTriangle(const Ray16 &ray, const glm::vec3 &_v0, const glm::vec3 &_v1, const glm::vec3 &_v2) {
+    RayHit16 hit;
+
+    // Pack vertices
+    vec3f16 v0(_v0.x,_v0.y,_v0.z);
+    vec3f16 v1(_v1.x,_v1.y,_v1.z);
+    vec3f16 v2(_v2.x,_v2.y,_v2.z);
+
+    vec3f16 e1 = v1 - v0;
+    vec3f16 e2 = v2 - v0;
+    // Calculate planes normal vector
+    vec3f16 pvec = cross(ray.dir, e2);
+    Float16 det = dot(e1, pvec);
+
+    // Ray is parallel to plane
+    If(abs(det) > 1e-8,[&]() {
+        Float16 inv_det = 1 / det;
+        vec3f16 tvec = ray.org - v0;
+        Float16 u = dot(tvec, pvec) * inv_det;
+        If(u >= 0.f & u <= 1.f,[&]() {
+            vec3f16 qvec = cross(tvec, e1);
+            Float16 v = dot(ray.dir, qvec) * inv_det;
+            If( v >= 0.0f & u + v <= 1.0f, [&]() {
+                hit.dist = dot(e2, qvec) * inv_det;
+                hit.status = 1.f;
+                hit.bc = vec3f16(1.0f - u - v, u, v);
+            });
+        });
+    });
+
+    return hit;
+}
+
 

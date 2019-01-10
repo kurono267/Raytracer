@@ -1,3 +1,6 @@
 [submodule "external/Mango"]
 	path = external/Mango
 	url = https://github.com/kurono267/Mango.git
+[submodule "external/simd"]
+	path = external/simd
+	url = https://github.com/kurono267/simd.git

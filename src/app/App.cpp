@@ -6,8 +6,8 @@
 #include "lights/PointLight.hpp"
 #include "lights/EnvLight.hpp"
 
-const int FRAME_WIDTH = 128*5;
-const int FRAME_HEIGHT = 72*5;
+const int FRAME_WIDTH = 128*10;
+const int FRAME_HEIGHT = 72*10;
 
 bool App::init() {
     auto mainWnd = mainApp.lock();
@@ -26,8 +26,8 @@ bool App::init() {
     _camera->initProj(glm::radians(45.0f),(float)(1280)/(float)(720),0.1f,1000.0f);
 
     _scene = std::make_shared<Scene>();
-    _scene->loadGLTF("models/room/scene.gltf");
-    //_scene->load("models/lambo/lambo");
+    //_scene->loadGLTF("models/room/scene.gltf");
+    _scene->load("models/lambo/lambo");
     for(auto model : _scene->models()){
         _sceneGPU.push_back(createMesh(device,model->mesh()));
     }
@@ -111,7 +111,7 @@ bool App::draw() {
 }
 
 bool App::update() {
-    std::cout << "CameraPos: " << glm::to_string(_camera->getPos()) << std::endl;
+    //std::cout << "CameraPos: " << glm::to_string(_camera->getPos()) << std::endl;
     _camera->updateUniform();
     if(_integrator->isUpdateFinish()){
         _integrator->sync();

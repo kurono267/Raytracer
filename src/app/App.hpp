@@ -10,6 +10,7 @@
 #include "scene/Camera.hpp"
 #include "../scene/Scene.hpp"
 #include "../cpu/PathTracer.hpp"
+#include "../cpu/PathTracer16.hpp"
 #include "../cpu/BDPT.hpp"
 
 using namespace mango;
