@@ -4,10 +4,10 @@
 
 #pragma once
 
-#include "../scene/Scene.hpp"
-#include "../scene/BVH.hpp"
-#include "scene/bsdf/Diffuse.hpp"
-#include "scene/bsdf/BSDF.hpp"
+#include "scene/Scene.hpp"
+#include "scene/BVH.hpp"
+#include "bsdf/Diffuse.hpp"
+#include "bsdf/BSDF.hpp"
 #include <random>
 #include <thread>
 

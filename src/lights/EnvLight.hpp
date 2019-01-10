@@ -5,7 +5,7 @@
 #pragma once
 
 #include "LightSource.hpp"
-#include "scene/samplers/Distributions.hpp"
+#include "samplers/Distributions.hpp"
 
 class EnvLight : public LightSource {
 	public:

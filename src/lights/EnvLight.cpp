@@ -2,7 +2,7 @@
 // Created by kurono267 on 2018-12-26.
 //
 
-#include <scene/bsdf/Samples.hpp>
+#include <bsdf/Samples.hpp>
 #include "EnvLight.hpp"
 
 const glm::mat3 RGB_2_XYZ = glm::mat3(

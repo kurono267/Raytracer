@@ -3,8 +3,8 @@
 //
 
 #include "App.hpp"
-#include "scene/lights/PointLight.hpp"
-#include "scene/lights/EnvLight.hpp"
+#include "lights/PointLight.hpp"
+#include "lights/EnvLight.hpp"
 
 const int FRAME_WIDTH = 128*5;
 const int FRAME_HEIGHT = 72*5;
