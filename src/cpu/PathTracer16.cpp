@@ -25,7 +25,6 @@ void PathTracer16::computeTile(const glm::ivec2 &start, const mango::scene::spCa
 	int blockSize = 4;
 
 	vec3f16 cameraPos(_pos.x,_pos.y,_pos.z);
-	clearMask16();
 
 	for(int yBlock = start.y;yBlock<start.y+tileSize;yBlock+=blockSize){
 		if(yBlock >= _height)break;
@@ -33,8 +32,8 @@ void PathTracer16::computeTile(const glm::ivec2 &start, const mango::scene::spCa
 			if(xBlock >= _width)break;
 
 			// Fill blocks Rays
-			Ray16 ray16;
-			ray16.org = cameraPos;
+			clearMask16();
+			vec3f16 dir;
 			for(int yB = 0;yB<blockSize;++yB){
 				int y = yBlock+yB;
 				if(y >= _height)break;
@@ -52,20 +51,19 @@ void PathTracer16::computeTile(const glm::ivec2 &start, const mango::scene::spCa
 											+ _forward;
 					glm::vec3 ray_direction = normalize(image_point);
 
-					ray16.dir.x[yB*blockSize+xB] = ray_direction.x;
-					ray16.dir.y[yB*blockSize+xB] = ray_direction.y;
-					ray16.dir.z[yB*blockSize+xB] = ray_direction.z;
+					dir.x[yB*blockSize+xB] = ray_direction.x;
+					dir.y[yB*blockSize+xB] = ray_direction.y;
+					dir.z[yB*blockSize+xB] = ray_direction.z;
 				}
 			}
+			Ray16 ray16(cameraPos,dir);
 
 			RayHit16 hit = _bvh.intersect16(ray16);
 
-			clearMask16();
-			vec3f16 color = vec3f16(0.5f);
+			//clearMask16();
+			vec3f16 color = vec3f16(0.0f);
 			If(hit.status != 0.f,[&](){
-				color = vec3f16(/*hit.dist*/1.f);
-			}).Else([&](){
-				color = vec3f16(0.0f);
+				color = vec3f16(hit.dist/200.0f);
 			});
 
 			for(int yB = 0;yB<blockSize;++yB) {

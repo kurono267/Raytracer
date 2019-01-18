@@ -53,7 +53,7 @@ class Integrator {
 		std::atomic_bool _isFinish = true;
 		std::atomic_bool _isRun = true;
 
-	const uint32_t tileSize = 16;
+	const uint32_t tileSize = 64;
 	const uint32_t threadsMax = 16;
 };
 

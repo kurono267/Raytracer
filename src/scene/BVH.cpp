@@ -344,11 +344,11 @@ RayHit16 BVH::intersect16(const Ray16 &ray) {
     auto rootNode = _nodes[rootId];
     RayHit16 hit = intersectBBox(ray,_nodes[rootId].box);
     auto rootStatus = hit.status != 0.f;
-    /*if(none(rootStatus)){
+    if(none(rootStatus)){
         hit.status = 0.f;
         hit.dist   = std::numeric_limits<float>::infinity();
         return hit;
-    }*/
+    }
     If(hit.status != 0.f,[&](){
         hit.status = 0.f;
         hit.dist   = std::numeric_limits<float>::infinity();
@@ -361,7 +361,7 @@ RayHit16 BVH::intersect16(const Ray16 &ray) {
 void BVH::intersect16(const Ray16 &ray, RayHit16 &hit, BVHNode &curr) {
     if(curr.isLeaf){ // Leaf
         // Check triangles
-        auto triIds = curr.triIds;
+        /*auto triIds = curr.triIds;
         for(int i = 0;i<4;++i){
             int triId = triIds[i];
             if(triId >= 0){
@@ -369,12 +369,20 @@ void BVH::intersect16(const Ray16 &ray, RayHit16 &hit, BVHNode &curr) {
                 auto vp0 = _vertices[id0]; auto vp1 = _vertices[id1]; auto vp2 = _vertices[id2];
                 auto test = intersectTriangle(ray,vp0.pos,vp1.pos,vp2.pos);
                 If(test.status != 0.f & test.dist > 0.0001f & test.dist < hit.dist,[&](){
-                    hit = test;
+                    //hit = test;
+                    hit.dist = test.dist;
+                    hit.status = test.status;
+                    hit.bc = test.bc;
                     hit.id1 = triId;
                     hit.id0 = curr.modelIds[i];
                 });
             }
-        }
+        }*/
+        auto test = intersectBBox(ray,curr.box);
+        If(test.status != 0.f & test.dist > 0.0001f & test.dist < hit.dist,[&](){
+            hit.dist = test.dist;
+            hit.status = test.status;
+        });
     } else {
         // Check left and right child
         int leftID  = curr.data.left;
@@ -386,14 +394,14 @@ void BVH::intersect16(const Ray16 &ray, RayHit16 &hit, BVHNode &curr) {
         RayHit16 left = intersectBBox(ray,_nodes[leftID].box);
         RayHit16 right = intersectBBox(ray,_nodes[rightID].box);
 
-        auto leftStatus  = left.status != 0.f & left.dist < hit.dist;
-        auto rightStatus = right.status != 0.f & right.dist < hit.dist;
+        auto leftStatus  = left.status != 0.f;// & left.dist < hit.dist;
+        auto rightStatus = right.status != 0.f;// & right.dist < hit.dist;
 
-        If(leftStatus & rightStatus,[&](){
-            intersect16(ray,hit,leftNode);
-            intersect16(ray,hit,rightNode);
-        }).ElseIf(leftStatus,[&](){intersect16(ray,hit,leftNode);})
-        .ElseIf(rightStatus,[&](){intersect16(ray,hit,rightNode);});
+		If(leftStatus,[&](){
+			intersect16(ray,hit,leftNode);
+		}).Else([&](){
+			intersect16(ray,hit,rightNode);
+		});
     }
 }
 

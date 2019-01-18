@@ -86,9 +86,9 @@ inline vec3f16 min(const vec3f16& a, const vec3f16& b){
 
 inline vec3f16 cross(const vec3f16& a, const vec3f16& b){
     vec3f16 result;
-    result[0] = result[1] * result[2] - result[2] * result[1];
-    result[1] = result[0] * result[2] - result[2] * result[0];
-    result[2] = result[0] * result[1] - result[1] * result[0];
+    result[0] = a[1] * b[2] - a[2] * b[1];
+    result[1] = a[0] * b[2] - a[2] * b[0];
+    result[2] = a[0] * b[1] - a[1] * b[0];
     return result;
 }
 
