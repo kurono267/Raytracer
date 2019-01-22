@@ -93,9 +93,9 @@ inline vec3f16 cross(const vec3f16& a, const vec3f16& b){
 }
 
 inline Float16 dot(const vec3f16& a, const vec3f16& b){
-    Float16 result = 0.f;
+    Float16 result(0.f);
     for (int i = 0; i < 3; i++)
-        result = result + a[i] * b[i];
+        result += a[i] * b[i];
     return result;
 }
 

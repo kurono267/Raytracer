@@ -32,7 +32,6 @@ void PathTracer16::computeTile(const glm::ivec2 &start, const mango::scene::spCa
 			if(xBlock >= _width)break;
 
 			// Fill blocks Rays
-			clearMask16();
 			vec3f16 dir;
 			for(int yB = 0;yB<blockSize;++yB){
 				int y = yBlock+yB;
@@ -60,7 +59,6 @@ void PathTracer16::computeTile(const glm::ivec2 &start, const mango::scene::spCa
 
 			RayHit16 hit = _bvh.intersect16(ray16);
 
-			//clearMask16();
 			vec3f16 color = vec3f16(0.0f);
 			If(hit.status != 0.f,[&](){
 				color = vec3f16(hit.dist/200.0f);
