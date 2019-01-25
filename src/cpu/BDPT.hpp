@@ -39,7 +39,7 @@ class BDPT : public Integrator {
 		void init() override;
 
 		std::vector<BDPTVertex> createEyePath(const Ray& ray);
-		std::vector<BDPTVertex> createLightPath();
+		std::vector<BDPTVertex> createLightPath(const spLightSource& light);
 		std::vector<BDPTVertex> walk(Ray ray, const int maxDepth, const BDPTVertex& first);
 
 		std::random_device _rd;

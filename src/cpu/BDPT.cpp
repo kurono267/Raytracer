@@ -45,6 +45,10 @@ std::vector<BDPT::BDPTVertex> BDPT::createEyePath(const Ray &ray) {
 	return walk(ray,maxDepth-1,vertex);
 }
 
+std::vector<BDPT::BDPTVertex> BDPT::createLightPath(const spLightSource &light) {
+
+}
+
 std::vector<BDPT::BDPTVertex> BDPT::walk(Ray ray, const int maxDepth, const BDPTVertex& first) {
 	std::vector<BDPTVertex> path;
 	path.push_back(first);
@@ -79,6 +83,7 @@ std::vector<BDPT::BDPTVertex> BDPT::walk(Ray ray, const int maxDepth, const BDPT
 		point.type = BDPTVertex::Surface;
 		point.pdf = pdfFwd;
 		point.beta = beta;
+		point.bsdf = bsdf;
 		if (++bounces >= maxDepth) {
 			path.push_back(point);
 			break;
@@ -95,7 +100,7 @@ std::vector<BDPT::BDPTVertex> BDPT::walk(Ray ray, const int maxDepth, const BDPT
 			pdfRev = pdfFwd = 0;
 		}
 		//beta *= CorrectShadingNormal(isect, wo, wi, mode);
-		ray = ray = Ray(vertex.pos,wi);
+		ray = Ray(vertex.pos,wi);
 
 		// Compute reverse area density at preceding vertex
 		//if(path.size() > 1)path[path.size()-2].pdfRev = vertex.ConvertDensity(pdfRev, prev);
